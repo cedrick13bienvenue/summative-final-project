@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node", "express", "cors", "jsonwebtoken", "bcryptjs", "nodemailer", "qrcode", "swagger-jsdoc", "swagger-ui-express", "uuid"],
+    "skipLibCheck": true
+  },
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/tests/**/*",
+    "src/**/*.test.ts",
+    "src/**/*-test.ts",
+    "**/*.spec.ts",
+    "coverage"
+  ]
+}
