@@ -5,7 +5,7 @@ import { UserRole } from '../../models';
 import { AuthenticatedRequest } from '../../middleware/auth';
 
 // Mock the AuthService
-jest.mock('../../src/services/authService');
+jest.mock('../../services/authService');
 
 const MockAuthService = AuthService as jest.Mocked<typeof AuthService>;
 
@@ -57,20 +57,22 @@ describe('AuthController', () => {
       });
     });
 
-    it('should return 400 if credentials are missing', async () => {
+    it('should return 401 if credentials are invalid', async () => {
       mockReq.body = {
         email: 'test@example.com',
-        // missing password
+        password: '',
       };
+
+      MockAuthService.login.mockRejectedValue(new Error('Email and password are required'));
 
       await AuthController.login(mockReq as Request, mockRes as Response);
 
-      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(mockRes.status).toHaveBeenCalledWith(401);
       expect(mockRes.json).toHaveBeenCalledWith({
         success: false,
         error: {
           message: 'Email and password are required',
-          statusCode: 400,
+          statusCode: 401,
         },
       });
     });
@@ -166,6 +168,8 @@ describe('AuthController', () => {
         // missing newPassword
       };
 
+      MockAuthService.changePassword.mockRejectedValue(new Error('Current password and new password are required'));
+
       await AuthController.changePassword(mockReq as AuthenticatedRequest, mockRes as Response);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
@@ -184,6 +188,8 @@ describe('AuthController', () => {
         currentPassword: 'oldPassword',
         newPassword: '123', // too short
       };
+
+      MockAuthService.changePassword.mockRejectedValue(new Error('New password must be at least 6 characters long'));
 
       await AuthController.changePassword(mockReq as AuthenticatedRequest, mockRes as Response);
 

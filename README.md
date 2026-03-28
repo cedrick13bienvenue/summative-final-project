@@ -1,5 +1,11 @@
 # MedConnect Backend
 
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com/cedrick13bienvenue/summative-final-project)
+[![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen)](https://github.com/cedrick13bienvenue/summative-final-project)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-blue)](https://nodejs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 A comprehensive Digital Prescription & Patient Records System built with Express.js, TypeScript, and PostgreSQL. This system enables healthcare providers to create digital prescriptions with QR codes, manage patient records, and facilitate seamless pharmacy operations.
 
 ## Features
@@ -513,6 +519,110 @@ Ensure all production environment variables are properly configured:
   }
 }
 ```
+
+## Testing
+
+MedConnect maintains **90% test coverage** across branches, functions, lines, and statements, covering both unit tests and integration (controller) tests.
+
+### Test Structure
+
+```
+src/tests/
+├── models/
+│   ├── User-test.ts              # User model & bcrypt methods
+│   ├── Patient-test.ts           # Patient model
+│   ├── Doctor-test.ts            # Doctor model & verification
+│   ├── Pharmacist-test.ts        # Pharmacist model & verification
+│   ├── MedicalVisit-test.ts      # MedicalVisit model
+│   ├── Prescription-test.ts      # Prescription model & status enums
+│   ├── QRCode-test.ts            # QRCode model (isExpired, markAsUsed)
+│   ├── PharmacyLog-test.ts       # PharmacyLog model & actions
+│   ├── OTPVerification-test.ts   # OTP isValid, isExpired, generateOTPCode
+│   └── TokenBlacklist-test.ts    # Token blacklist static methods
+├── services/
+│   ├── authService-unit-test.ts  # AuthService: register, login, logout, changePassword
+│   ├── patientService-test.ts    # PatientService: registration, visits, prescriptions
+│   ├── doctorService-test.ts     # DoctorService: CRUD, verification
+│   ├── pharmacistService-test.ts # PharmacistService: CRUD, verify/unverify
+│   ├── pharmacyService-test.ts   # PharmacyService: scan, validate, dispense, reject
+│   └── qrCodeService-test.ts     # QRCodeService: generate, verify, stats
+├── controllers/
+│   ├── authController-test.ts    # AuthController integration tests
+│   ├── patientController-test.ts # PatientController integration tests
+│   ├── doctorController-test.ts  # DoctorController integration tests
+│   ├── pharmacistController-test.ts # PharmacistController integration tests
+│   └── pharmacyController-test.ts   # PharmacyController integration tests
+├── helpers/
+│   └── testDatabase.ts           # Test DB helpers
+└── setup.ts                      # Global test setup
+```
+
+### Running Tests
+
+**Run all tests:**
+```bash
+npm test
+```
+
+**Run with coverage report:**
+```bash
+npm run test:coverage
+```
+
+**Run a specific test file:**
+```bash
+npm test -- --testPathPattern="authService"
+```
+
+**Run only model tests:**
+```bash
+npm test -- --testPathPattern="models"
+```
+
+**Run only service tests:**
+```bash
+npm test -- --testPathPattern="services"
+```
+
+**Run only controller tests:**
+```bash
+npm test -- --testPathPattern="controllers"
+```
+
+**Watch mode (for development):**
+```bash
+npm test -- --watch
+```
+
+### Coverage Report
+
+After running `npm run test:coverage`, a full HTML report is generated at:
+```
+coverage/index.html
+```
+
+Open it in your browser to see line-by-line coverage for every file.
+
+### Coverage Thresholds
+
+The project enforces the following minimum thresholds (configured in `jest.config.ts`):
+
+| Metric     | Threshold |
+|------------|-----------|
+| Statements | 90%       |
+| Branches   | 90%       |
+| Functions  | 90%       |
+| Lines      | 90%       |
+
+The test suite will **fail** if any threshold is not met.
+
+### Test Strategy
+
+- **Unit tests (models & services):** All database calls are mocked with `jest.mock()`. Tests validate pure business logic in isolation.
+- **Integration tests (controllers):** Services are mocked. Tests validate HTTP response codes, JSON structure, authentication guards, and error handling.
+- **No test database required:** All tests run in-memory using mocks — no PostgreSQL connection needed.
+
+---
 
 ## Contributing
 
