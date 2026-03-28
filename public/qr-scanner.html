@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MedConnect - Pharmacy QR Scanner</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qr-scanner/1.4.2/qr-scanner.umd.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #f8f9fa;
+        color: #333;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background-color: white;
+        min-height: 100vh;
+      }
+
+      .header {
+        background-color: #2c3e50;
+        color: white;
+        padding: 20px;
+        text-align: center;
+        border-bottom: 3px solid #34495e;
+      }
+
+      .header h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 600;
+      }
+
+      .header p {
+        margin: 5px 0 0 0;
+        font-size: 14px;
+        opacity: 0.9;
+      }
+
+      .content {
+        padding: 20px;
+      }
+
+      .auth-section {
+        background-color: #ecf0f1;
+        padding: 20px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        border: 1px solid #bdc3c7;
+      }
+
+      .auth-section h3 {
+        margin-top: 0;
+        color: #2c3e50;
+        font-size: 18px;
+        margin-bottom: 15px;
+      }
+
+      .form-group {
+        margin-bottom: 15px;
+      }
+
+      .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+        color: #2c3e50;
+        font-size: 14px;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #bdc3c7;
+        border-radius: 3px;
+        font-size: 14px;
+        box-sizing: border-box;
+        transition: border-color 0.3s;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
+      }
+
+      .btn {
+        background-color: #3498db;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+        transition: background-color 0.3s;
+      }
+
+      .btn:hover {
+        background-color: #2980b9;
+      }
+
+      .btn:disabled {
+        background-color: #bdc3c7;
+        cursor: not-allowed;
+      }
+
+      .btn-danger {
+        background-color: #e74c3c;
+      }
+
+      .btn-danger:hover {
+        background-color: #c0392b;
+      }
+
+      .scanner-section {
+        margin: 20px 0;
+      }
+
+      .scanner-section h3 {
+        color: #2c3e50;
+        font-size: 18px;
+        margin-bottom: 15px;
+      }
+
+      #scanner-container {
+        position: relative;
+        margin: 20px auto;
+        max-width: 500px;
+        border: 2px solid #bdc3c7;
+        border-radius: 5px;
+        overflow: hidden;
+      }
+
+      #video {
+        width: 100%;
+        height: 300px;
+        display: block;
+      }
+
+      .scanner-overlay {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 200px;
+        height: 200px;
+        border: 2px solid #3498db;
+        border-radius: 5px;
+        background: transparent;
+      }
+
+      .manual-input {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        border: 1px solid #e9ecef;
+      }
+
+      .manual-input h4 {
+        margin-top: 0;
+        color: #2c3e50;
+        font-size: 16px;
+        margin-bottom: 10px;
+      }
+
+      .result-section {
+        margin-top: 20px;
+        display: none;
+      }
+
+      .result-section.show {
+        display: block;
+      }
+
+      .result-section h3 {
+        color: #2c3e50;
+        font-size: 18px;
+        margin-bottom: 15px;
+      }
+
+      .prescription-card {
+        background-color: white;
+        padding: 20px;
+        border-radius: 5px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e9ecef;
+      }
+
+      .prescription-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e9ecef;
+      }
+
+      .prescription-number {
+        font-size: 18px;
+        font-weight: bold;
+        color: #2c3e50;
+      }
+
+      .prescription-status {
+        padding: 4px 12px;
+        border-radius: 3px;
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+
+      .status-pending {
+        background-color: #fff3cd;
+        color: #856404;
+      }
+
+      .status-scanned {
+        background-color: #d1ecf1;
+        color: #0c5460;
+      }
+
+      .status-validated {
+        background-color: #d4edda;
+        color: #155724;
+      }
+
+      .status-dispensed {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+
+      .status-rejected {
+        background-color: #f5c6cb;
+        color: #721c24;
+      }
+
+      .prescription-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+
+      .detail-item {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .detail-label {
+        font-size: 12px;
+        color: #6c757d;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+        font-weight: 600;
+      }
+
+      .detail-value {
+        font-size: 14px;
+        color: #2c3e50;
+        font-weight: 500;
+      }
+
+      .medicines-section {
+        margin-top: 20px;
+      }
+
+      .medicines-section h4 {
+        color: #2c3e50;
+        font-size: 16px;
+        margin-bottom: 10px;
+      }
+
+      .medicine-item {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 3px;
+        margin-bottom: 10px;
+        border-left: 4px solid #3498db;
+      }
+
+      .medicine-name {
+        font-weight: bold;
+        color: #2c3e50;
+        margin-bottom: 5px;
+        font-size: 14px;
+      }
+
+      .medicine-details {
+        font-size: 13px;
+        color: #6c757d;
+        line-height: 1.4;
+      }
+
+      .error-message {
+        background-color: #f8d7da;
+        color: #721c24;
+        padding: 15px;
+        border-radius: 3px;
+        margin-top: 15px;
+        border-left: 4px solid #dc3545;
+        font-size: 14px;
+      }
+
+      .success-message {
+        background-color: #d4edda;
+        color: #155724;
+        padding: 15px;
+        border-radius: 3px;
+        margin-top: 15px;
+        border-left: 4px solid #28a745;
+        font-size: 14px;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 20px;
+      }
+
+      .spinner {
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #3498db;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 10px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      .button-group {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 15px;
+      }
+
+      .button-group .btn {
+        flex: 1;
+        max-width: 150px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>MedConnect Pharmacy</h1>
+        <p>QR Code Scanner for Prescription Verification</p>
+      </div>
+
+      <div class="content">
+        <!-- Authentication Section -->
+        <div class="auth-section">
+          <h3>Pharmacist Authentication</h3>
+          <div class="form-group">
+            <label for="pharmacistEmail">Email Address:</label>
+            <input
+              type="email"
+              id="pharmacistEmail"
+              placeholder="Pharmacist Email"
+            />
+          </div>
+          <div class="form-group">
+            <label for="pharmacistPassword">Password:</label>
+            <input
+              type="password"
+              id="pharmacistPassword"
+              placeholder="Enter your password"
+            />
+          </div>
+          <button class="btn" onclick="loginPharmacist()">
+            Login as Pharmacist
+          </button>
+          <div id="authStatus"></div>
+        </div>
+
+        <!-- Scanner Section -->
+        <div class="scanner-section" id="scannerSection" style="display: none">
+          <h3>QR Code Scanner</h3>
+          <div id="scanner-container">
+            <video id="video" autoplay></video>
+            <div class="scanner-overlay"></div>
+          </div>
+          <div class="button-group">
+            <button class="btn" onclick="startScanner()">Start Camera</button>
+            <button class="btn btn-danger" onclick="stopScanner()">
+              Stop Camera
+            </button>
+          </div>
+
+          <div class="manual-input">
+            <h4>Alternative Lookup</h4>
+            <p style="font-size: 12px; color: #6c757d; margin-bottom: 15px">
+              Enter the patient's Rwanda National ID to find their prescription.
+            </p>
+
+            <div class="form-group">
+              <label
+                style="
+                  font-size: 12px;
+                  color: #2c3e50;
+                  margin-bottom: 5px;
+                  display: block;
+                "
+              >
+                National ID (16 digits):
+              </label>
+              <input
+                type="text"
+                id="nationalId"
+                placeholder="e.g. 1198500123456789"
+                maxlength="16"
+                style="margin-bottom: 10px"
+              />
+              <button
+                class="btn"
+                onclick="lookupByNationalId()"
+                style="width: 100%"
+              >
+                Lookup by National ID
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="result-section" id="resultSection">
+          <h3>Prescription Details</h3>
+          <div id="resultContent"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let currentToken = null;
+      let qrScanner = null;
+      let isScanning = false;
+
+      // API Base URL - Auto-detect based on current domain
+      const API_BASE = window.location.origin + "/api/v1";
+
+      // Log the detected API base for debugging
+      console.log("QR Scanner initialized with API_BASE:", API_BASE);
+
+      // Login as pharmacist
+      async function loginPharmacist() {
+        const email = document.getElementById("pharmacistEmail").value;
+        const password = document.getElementById("pharmacistPassword").value;
+        const statusDiv = document.getElementById("authStatus");
+
+        if (!email || !password) {
+          statusDiv.innerHTML =
+            '<div class="error-message">Please enter both email and password</div>';
+          return;
+        }
+
+        try {
+          const response = await fetch(`${API_BASE}/auth/login`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ email, password }),
+          });
+
+          const data = await response.json();
+
+          if (data.success && data.data.token) {
+            currentToken = data.data.token;
+            statusDiv.innerHTML =
+              '<div class="success-message">Successfully logged in as pharmacist!</div>';
+            document.getElementById("scannerSection").style.display = "block";
+          } else {
+            statusDiv.innerHTML = `<div class="error-message">Login failed: ${
+              data.error?.message || "Unknown error"
+            }</div>`;
+          }
+        } catch (error) {
+          statusDiv.innerHTML = `<div class="error-message">Network error: ${error.message}</div>`;
+        }
+      }
+
+      // Start QR scanner
+      async function startScanner() {
+        if (isScanning) return;
+
+        try {
+          const video = document.getElementById("video");
+
+          // Suppress console noise
+          const originalConsoleError = console.error;
+          console.error = function (...args) {
+            if (!args[0]?.includes?.("No QR code found")) {
+              originalConsoleError.apply(console, args);
+            }
+          };
+
+          qrScanner = new QrScanner(
+            video,
+            (result) => {
+              console.log("QR Code detected:", result.data);
+              // Stop scanning after successful detection
+              stopScanner();
+              // Restore console.error
+              console.error = originalConsoleError;
+              scanQRCode(result.data);
+            },
+            {
+              highlightScanRegion: false,
+              highlightCodeOutline: false,
+              maxScansPerSecond: 3,
+            }
+          );
+
+          await qrScanner.start();
+          isScanning = true;
+        } catch (error) {
+          console.error("Error starting scanner:", error);
+          alert(
+            "Error starting camera. Please check permissions and ensure you're using HTTPS."
+          );
+        }
+      }
+
+      // Stop QR scanner
+      function stopScanner() {
+        if (qrScanner) {
+          qrScanner.stop();
+          qrScanner.destroy();
+          qrScanner = null;
+          isScanning = false;
+          document.getElementById("video").srcObject = null;
+        }
+      }
+
+      // Lookup by National ID
+      function lookupByNationalId() {
+        const nationalId = document.getElementById("nationalId").value.trim();
+        if (!nationalId) {
+          alert("Please enter a National ID");
+          return;
+        }
+        if (!/^\d{16}$/.test(nationalId)) {
+          alert("National ID must be exactly 16 digits");
+          return;
+        }
+        lookupPrescriptionByNationalId(nationalId);
+      }
+
+      // Lookup prescription by National ID
+      async function lookupPrescriptionByNationalId(nationalId) {
+        if (!currentToken) {
+          alert("Please login first");
+          return;
+        }
+
+        const resultDiv = document.getElementById("resultSection");
+        const contentDiv = document.getElementById("resultContent");
+
+        contentDiv.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Looking up prescription...</p>
+                </div>
+            `;
+        resultDiv.classList.add("show");
+
+        try {
+          const response = await fetch(`${API_BASE}/pharmacy/lookup`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${currentToken}`,
+            },
+            body: JSON.stringify({ nationalId }),
+          });
+
+          const data = await response.json();
+
+          if (data.success && data.data.prescription) {
+            displayPrescription(data.data.prescription, null, "reference");
+          } else {
+            contentDiv.innerHTML = `
+                        <div class="error-message">
+                            Lookup failed: ${data.error?.message || data.message || "Unknown error"}
+                        </div>
+                    `;
+          }
+        } catch (error) {
+          contentDiv.innerHTML = `
+                    <div class="error-message">
+                        Network error: ${error.message}
+                    </div>
+                `;
+        }
+      }
+
+      // Scan QR code
+      async function scanQRCode(qrHash) {
+        if (!currentToken) {
+          alert("Please login first");
+          return;
+        }
+
+        console.log("QR Code scanned, data:", qrHash);
+
+        const resultDiv = document.getElementById("resultSection");
+        const contentDiv = document.getElementById("resultContent");
+
+        // Show loading
+        contentDiv.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Scanning QR code...</p>
+                    <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                      QR Data: ${
+                        qrHash ? qrHash.substring(0, 20) + "..." : "No data"
+                      }
+                    </p>
+                </div>
+            `;
+        resultDiv.classList.add("show");
+
+        try {
+          const response = await fetch(`${API_BASE}/pharmacy/scan`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${currentToken}`,
+            },
+            body: JSON.stringify({ qrHash }),
+          });
+
+          const data = await response.json();
+
+          if (data.success && data.data.prescription) {
+            displayPrescription(data.data.prescription, null, "qr");
+          } else {
+            contentDiv.innerHTML = `
+                        <div class="error-message">
+                            Scan failed: ${
+                              data.error?.message ||
+                              data.message ||
+                              "Unknown error"
+                            }
+                        </div>
+                    `;
+          }
+        } catch (error) {
+          contentDiv.innerHTML = `
+                    <div class="error-message">
+                        Network error: ${error.message}
+                    </div>
+                `;
+        }
+      }
+
+      // Display prescription details
+      function displayPrescription(prescription, qrHash = null, source = "qr") {
+        const contentDiv = document.getElementById("resultContent");
+
+        const statusClass = `status-${prescription.status}`;
+        const statusText =
+          prescription.status.charAt(0).toUpperCase() +
+          prescription.status.slice(1);
+
+        let medicinesHtml = "";
+        if (prescription.items && prescription.items.length > 0) {
+          medicinesHtml = `
+                    <div class="medicines-section">
+                        <h4>Prescribed Medicines</h4>
+                        ${prescription.items
+                          .map(
+                            (item) => `
+                            <div class="medicine-item">
+                                <div class="medicine-name">${item.medicineName}</div>
+                                <div class="medicine-details">
+                                    <strong>Dosage:</strong> ${item.dosage} |
+                                    <strong>Frequency:</strong> ${item.frequency} |
+                                    <strong>Quantity:</strong> ${item.quantity}
+                                    ${item.instructions ? `<br><strong>Instructions:</strong> ${item.instructions}` : ""}
+                                </div>
+                            </div>
+                        `).join("")}
+                    </div>
+                `;
+        }
+
+        contentDiv.innerHTML = `
+                <div class="prescription-card">
+                    <div class="prescription-header">
+                        <div class="prescription-number">${prescription.prescriptionNumber}</div>
+                        <div class="prescription-status ${statusClass}">${statusText}</div>
+                    </div>
+
+                    <div class="prescription-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Patient Name</div>
+                            <div class="detail-value">${prescription.patientName}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Doctor Name</div>
+                            <div class="detail-value">${prescription.doctorName}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Diagnosis</div>
+                            <div class="detail-value">${prescription.diagnosis || "Not specified"}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Created Date</div>
+                            <div class="detail-value">${new Date(prescription.createdAt).toLocaleDateString()}</div>
+                        </div>
+                    </div>
+
+                    ${prescription.doctorNotes ? `
+                        <div class="detail-item">
+                            <div class="detail-label">Doctor Notes</div>
+                            <div class="detail-value">${prescription.doctorNotes}</div>
+                        </div>
+                    ` : ""}
+
+                    ${medicinesHtml}
+
+                    <div class="prescription-details" style="margin-top: 20px;">
+                        <div class="detail-item">
+                            <div class="detail-label">Can Dispense</div>
+                            <div class="detail-value">${prescription.canDispense ? "Yes" : "No"}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Prescription ID</div>
+                            <div class="detail-value" style="font-family: monospace; background-color: #f8f9fa; padding: 8px; border-radius: 4px; word-break: break-all; font-size: 12px;">
+                                ${prescription.id}
+                                <button onclick="copyToClipboard('${prescription.id}')" style="margin-left: 10px; padding: 4px 8px; background-color: #3498db; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">
+                                    Copy
+                                </button>
+                            </div>
+                        </div>
+                        ${source === "reference" && prescription.qrCode?.qrHash ? `
+                        <div class="detail-item">
+                            <div class="detail-label">QR Hash</div>
+                            <div class="detail-value" style="font-family: monospace; background-color: #f8f9fa; padding: 8px; border-radius: 4px; word-break: break-all; font-size: 12px;">
+                                ${prescription.qrCode.qrHash}
+                                <button onclick="copyToClipboard('${prescription.qrCode.qrHash}')" style="margin-left: 10px; padding: 4px 8px; background-color: #3498db; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 11px;">
+                                    Copy
+                                </button>
+                            </div>
+                        </div>
+                        ` : ""}
+                    </div>
+                </div>
+            `;
+      }
+
+      // Copy to clipboard function
+      function copyToClipboard(text) {
+        navigator.clipboard
+          .writeText(text)
+          .then(() => {
+            alert("QR Hash copied to clipboard!");
+          })
+          .catch((err) => {
+            console.error("Failed to copy: ", err);
+            // Fallback for older browsers
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand("copy");
+            document.body.removeChild(textArea);
+            alert("QR Hash copied to clipboard!");
+          });
+      }
+
+      // Cleanup on page unload
+      window.addEventListener("beforeunload", () => {
+        stopScanner();
+      });
+    </script>
+  </body>
+</html>
