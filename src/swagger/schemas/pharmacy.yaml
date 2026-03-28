@@ -1,0 +1,668 @@
+components:
+  schemas:
+    QRCodeScanRequest:
+      type: object
+      required: [qrHash]
+      properties:
+        qrHash:
+          type: string
+          example: "abc123def456ghi789"
+          description: The QR code hash to scan
+
+    NationalIdLookupRequest:
+      type: object
+      required: [nationalId]
+      properties:
+        nationalId:
+          type: string
+          pattern: '^\d{16}$'
+          minLength: 16
+          maxLength: 16
+          example: "1198500123456789"
+          description: The patient's Rwanda National ID (16 digits)
+
+    NationalIdLookupResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Prescription looked up successfully"
+        data:
+          type: object
+          properties:
+            prescription:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                  example: "123e4567-e89b-12d3-a456-426614174000"
+                prescriptionNumber:
+                  type: string
+                  example: "RX-20241201-1234"
+                patientName:
+                  type: string
+                  example: "John Doe"
+                doctorName:
+                  type: string
+                  example: "Dr. Smith"
+                diagnosis:
+                  type: string
+                  example: "Fever and bacterial infection"
+                doctorNotes:
+                  type: string
+                  example: "Take with food, complete full course"
+                status:
+                  type: string
+                  enum: [pending, scanned, validated, dispensed, rejected]
+                  example: "pending"
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: "123e4567-e89b-12d3-a456-426614174000"
+                      prescriptionId:
+                        type: string
+                        format: uuid
+                        example: "123e4567-e89b-12d3-a456-426614174000"
+                      medicineName:
+                        type: string
+                        example: "Amoxicillin"
+                      dosage:
+                        type: string
+                        example: "500mg"
+                      frequency:
+                        type: string
+                        example: "Twice daily"
+                      quantity:
+                        type: integer
+                        example: 20
+                      instructions:
+                        type: string
+                        example: "Take with food"
+                      isDispensed:
+                        type: boolean
+                        example: false
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2024-12-01T10:30:00.000Z"
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        example: "2024-12-01T10:30:00.000Z"
+                createdAt:
+                  type: string
+                  format: date-time
+                  example: "2024-12-01T10:30:00.000Z"
+                qrCode:
+                  type: object
+                  properties:
+                    qrHash:
+                      type: string
+                      example: "abc123def456ghi789"
+                    isUsed:
+                      type: boolean
+                      example: false
+                    scanCount:
+                      type: integer
+                      example: 0
+                    expiresAt:
+                      type: string
+                      format: date-time
+                      example: "2024-12-08T10:30:00.000Z"
+            canDispense:
+              type: boolean
+              example: true
+              description: Whether the prescription can be dispensed
+
+    QRCodeScanResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Prescription scanned successfully"
+        data:
+          type: object
+          properties:
+            prescription:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                  example: "123e4567-e89b-12d3-a456-426614174000"
+                prescriptionNumber:
+                  type: string
+                  example: "RX-20241201-1234"
+                patientName:
+                  type: string
+                  example: "Jane Smith"
+                doctorName:
+                  type: string
+                  example: "Dr. Michael Johnson"
+                diagnosis:
+                  type: string
+                  example: "Fever and bacterial infection"
+                doctorNotes:
+                  type: string
+                  example: "Take with food, complete full course"
+                status:
+                  type: string
+                  enum: [pending, scanned, validated, dispensed, rejected]
+                  example: "scanned"
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: "123e4567-e89b-12d3-a456-426614174000"
+                      prescriptionId:
+                        type: string
+                        format: uuid
+                        example: "123e4567-e89b-12d3-a456-426614174000"
+                      medicineName:
+                        type: string
+                        example: "Amoxicillin"
+                      dosage:
+                        type: string
+                        example: "500mg"
+                      frequency:
+                        type: string
+                        example: "Twice daily"
+                      quantity:
+                        type: integer
+                        example: 20
+                      instructions:
+                        type: string
+                        example: "Take with food"
+                      isDispensed:
+                        type: boolean
+                        example: false
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: "2024-12-01T10:30:00.000Z"
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        example: "2024-12-01T10:30:00.000Z"
+                createdAt:
+                  type: string
+                  format: date-time
+                  example: "2024-12-01T10:30:00.000Z"
+                qrCode:
+                  type: object
+                  properties:
+                    qrHash:
+                      type: string
+                      example: "abc123def456ghi789"
+                    isUsed:
+                      type: boolean
+                      example: false
+                    scanCount:
+                      type: integer
+                      example: 1
+                    expiresAt:
+                      type: string
+                      format: date-time
+                      example: "2024-12-08T10:30:00.000Z"
+            isValid:
+              type: boolean
+              example: true
+            canDispense:
+              type: boolean
+              example: true
+
+    PrescriptionValidationRequest:
+      type: object
+      properties:
+        notes:
+          type: string
+          example: "Prescription reviewed and approved"
+          description: Optional notes from pharmacist
+
+    PrescriptionDispenseRequest:
+      type: object
+      properties:
+        notes:
+          type: string
+          example: "Medication dispensed successfully"
+          description: Optional notes from pharmacist
+        dispensingItems:
+          type: array
+          description: Array of items being dispensed with inventory details (order must match prescription items)
+          items:
+            type: object
+            required: [dispensedQuantity, unitPrice, batchNumber, expiryDate]
+            properties:
+              dispensedQuantity:
+                type: integer
+                minimum: 1
+                example: 30
+                description: Actual quantity dispensed
+              unitPrice:
+                type: number
+                format: decimal
+                example: 15.50
+                description: Price per unit
+              batchNumber:
+                type: string
+                example: "BATCH-2024-001"
+                description: Medicine batch number
+              expiryDate:
+                type: string
+                format: date
+                example: "2025-12-31"
+                description: Medicine expiry date
+              dispensingNotes:
+                type: string
+                example: "Store in cool, dry place"
+                description: Optional notes for this specific item
+
+    PrescriptionRejectRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          example: "Invalid prescription or expired medication"
+          description: Reason for rejection
+        notes:
+          type: string
+          example: "Additional details about rejection"
+          description: Optional additional notes
+
+    DispenseResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Prescription dispensed successfully"
+        data:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            prescriptionNumber:
+              type: string
+              example: "RX-20241201-1234"
+            status:
+              type: string
+              enum: [pending, scanned, validated, dispensed, rejected]
+              example: "dispensed"
+            totalAmount:
+              type: number
+              format: decimal
+              example: 465.00
+              description: Total amount for all dispensed items
+            doctor:
+              type: object
+              properties:
+                fullName:
+                  type: string
+                  example: "Dr. Michael Johnson"
+                email:
+                  type: string
+                  example: "michael.johnson@hospital.com"
+                phone:
+                  type: string
+                  example: "+250788123456"
+                specialization:
+                  type: string
+                  example: "General Medicine"
+                hospitalName:
+                  type: string
+                  example: "City General Hospital"
+            patient:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                  example: "123e4567-e89b-12d3-a456-426614174001"
+                fullName:
+                  type: string
+                  example: "Jane Smith"
+                email:
+                  type: string
+                  example: "jane.smith@email.com"
+                insuranceProvider:
+                  type: string
+                  example: "HealthPlus Insurance"
+                insuranceNumber:
+                  type: string
+                  example: "HPI789012"
+            items:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  medicineName:
+                    type: string
+                    example: "Paracetamol"
+                  dosage:
+                    type: string
+                    example: "500mg"
+                  frequency:
+                    type: string
+                    example: "2 times daily"
+                  quantity:
+                    type: integer
+                    example: 20
+                  instructions:
+                    type: string
+                    example: "Take with food"
+                  dispensedQuantity:
+                    type: integer
+                    example: 20
+                  unitPrice:
+                    type: number
+                    format: decimal
+                    example: 15.50
+                  batchNumber:
+                    type: string
+                    example: "BATCH-2024-001"
+                  expiryDate:
+                    type: string
+                    format: date
+                    example: "2025-12-31"
+                  isDispensed:
+                    type: boolean
+                    example: true
+
+    PharmacyHistoryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              prescriptionId:
+                type: string
+                format: uuid
+              prescriptionNumber:
+                type: string
+                example: "RX-20241201-1234"
+              patientName:
+                type: string
+                example: "John Doe"
+              doctorName:
+                type: string
+                example: "Dr. Smith"
+              action:
+                type: string
+                enum: [scanned, validated, dispensed, rejected]
+                example: "dispensed"
+              notes:
+                type: string
+                example: "Medication dispensed successfully"
+              actionTimestamp:
+                type: string
+                format: date-time
+                example: "2024-12-01T15:30:00.000Z"
+              createdAt:
+                type: string
+                format: date-time
+
+    PrescriptionLogsResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            logs:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    example: "123e4567-e89b-12d3-a456-426614174000"
+                  prescriptionId:
+                    type: string
+                    format: uuid
+                    example: "123e4567-e89b-12d3-a456-426614174000"
+                  pharmacistId:
+                    type: string
+                    format: uuid
+                    example: "123e4567-e89b-12d3-a456-426614174000"
+                  action:
+                    type: string
+                    enum: [scanned, validated, dispensed, rejected]
+                    example: "dispensed"
+                  notes:
+                    type: string
+                    example: "Medication dispensed successfully"
+                  actionTimestamp:
+                    type: string
+                    format: date-time
+                    example: "2024-12-01T15:30:00.000Z"
+                  createdAt:
+                    type: string
+                    format: date-time
+                    example: "2024-12-01T15:30:00.000Z"
+
+    PharmacyLog:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        prescriptionId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        pharmacistId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        action:
+          type: string
+          enum: [scanned, validated, dispensed, fulfilled]
+          example: "dispensed"
+        notes:
+          type: string
+          example: "Prescription dispensed with insurance coverage"
+        actionTimestamp:
+          type: string
+          format: date-time
+          example: "2024-12-01T15:30:00.000Z"
+        # Dispensing details (only present for dispensed actions)
+        dispensedQuantity:
+          type: integer
+          example: 30
+          description: Quantity dispensed
+        unitPrice:
+          type: number
+          format: decimal
+          example: 15.50
+          description: Price per unit
+        totalAmount:
+          type: number
+          format: decimal
+          example: 465.00
+          description: Total amount for all items
+        batchNumber:
+          type: string
+          example: "BATCH-2024-001"
+          description: Medicine batch number
+        expiryDate:
+          type: string
+          format: date
+          example: "2025-12-31"
+          description: Medicine expiry date
+        pharmacist:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            user:
+              type: object
+              properties:
+                fullName:
+                  type: string
+                  example: "Dr. Jane Pharmacist"
+                email:
+                  type: string
+                  example: "jane.pharmacist@pharmacy.com"
+        prescription:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            prescriptionNumber:
+              type: string
+              example: "RX-20241201-1234"
+            patient:
+              type: object
+              properties:
+                fullName:
+                  type: string
+                  example: "John Doe"
+            doctor:
+              type: object
+              properties:
+                user:
+                  type: object
+                  properties:
+                    fullName:
+                      type: string
+                      example: "Dr. Smith"
+
+    DispensingSummary:
+      type: object
+      properties:
+        prescriptionId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        totalAmount:
+          type: number
+          format: decimal
+          example: 465.00
+          description: Total amount for all dispensed items
+        dispensedItems:
+          type: array
+          description: List of dispensed items with inventory details
+          items:
+            type: object
+            properties:
+              medicineName:
+                type: string
+                example: "Paracetamol"
+              dispensedQuantity:
+                type: integer
+                example: 30
+              unitPrice:
+                type: number
+                format: decimal
+                example: 15.50
+              batchNumber:
+                type: string
+                example: "BATCH-2024-001"
+              expiryDate:
+                type: string
+                format: date
+                example: "2025-12-31"
+        dispensingDate:
+          type: string
+          format: date-time
+          example: "2024-12-01T15:30:00.000Z"
+          description: Date and time when prescription was dispensed
+        pharmacist:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            user:
+              type: object
+              properties:
+                fullName:
+                  type: string
+                  example: "Dr. Jane Pharmacist"
+                email:
+                  type: string
+                  example: "jane.pharmacist@pharmacy.com"
+        doctor:
+          type: object
+          properties:
+            fullName:
+              type: string
+              example: "Dr. John Smith"
+            email:
+              type: string
+              example: "doctor@hospital.com"
+            phone:
+              type: string
+              example: "+250788123456"
+              description: Doctor's phone number
+            licenseNumber:
+              type: string
+              example: "MD-RW-2024-001"
+              description: Doctor's medical license number
+            specialization:
+              type: string
+              example: "General Medicine"
+              description: Doctor's medical specialization
+            hospitalName:
+              type: string
+              example: "Kigali University Teaching Hospital"
+              description: Hospital where the doctor works
+        patient:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: "123e4567-e89b-12d3-a456-426614174000"
+            fullName:
+              type: string
+              example: "Jane Smith"
+            email:
+              type: string
+              example: "patient@example.com"
+            insuranceProvider:
+              type: string
+              example: "RSSB"
+              description: Patient's insurance provider
+            insuranceNumber:
+              type: string
+              example: "INS123456"
+              description: Patient's insurance policy number

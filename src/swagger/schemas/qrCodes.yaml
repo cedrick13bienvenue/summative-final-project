@@ -1,0 +1,234 @@
+# QR Code Schemas
+
+components:
+  schemas:
+    QRCode:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        qrHash:
+          type: string
+          example: "abc123def456ghi789"
+          description: "Unique hash identifier for the QR code"
+        prescriptionId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        encryptedData:
+          type: string
+          example: "U2FsdGVkX1+vupppZksvRf5pq5g5XjFRlipRkwB0K1Y="
+          description: "Encrypted prescription data"
+        expiresAt:
+          type: string
+          format: date-time
+          example: "2024-12-31T23:59:59.000Z"
+          description: "QR code expiration date"
+        isUsed:
+          type: boolean
+          example: false
+          description: "Whether the QR code has been used for dispensing"
+        scanCount:
+          type: integer
+          example: 0
+          description: "Number of times the QR code has been scanned"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00.000Z"
+      required:
+        - id
+        - qrHash
+        - prescriptionId
+        - encryptedData
+        - expiresAt
+        - isUsed
+        - scanCount
+        - createdAt
+        - updatedAt
+
+    QRCodeGenerationRequest:
+      type: object
+      properties:
+        prescriptionId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+      required:
+        - prescriptionId
+
+    QRCodeVerificationResponse:
+      type: object
+      properties:
+        isValid:
+          type: boolean
+          example: true
+        prescription:
+          $ref: "#/components/schemas/Prescription"
+        qrCode:
+          $ref: "#/components/schemas/QRCode"
+        scanCount:
+          type: integer
+          example: 1
+        message:
+          type: string
+          example: "QR code verified successfully"
+
+    QRCodeStats:
+      type: object
+      properties:
+        qrHash:
+          type: string
+          example: "abc123def456ghi789"
+        scanCount:
+          type: integer
+          example: 5
+        isUsed:
+          type: boolean
+          example: false
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00.000Z"
+        expiresAt:
+          type: string
+          format: date-time
+          example: "2024-12-31T23:59:59.000Z"
+        lastScannedAt:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2024-01-15T14:30:00.000Z"
+
+    EmailRequest:
+      type: object
+      properties:
+        prescriptionId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        patientEmail:
+          type: string
+          format: email
+          example: "patient@example.com"
+          description: "Optional: Override patient email address"
+      required:
+        - prescriptionId
+
+    EmailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Prescription email sent successfully"
+        emailSent:
+          type: boolean
+          example: true
+        qrCodeGenerated:
+          type: boolean
+          example: true
+        recipientEmail:
+          type: string
+          example: "patient@example.com"
+
+    QRCodeError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+              example: "QR code not found or expired"
+            statusCode:
+              type: integer
+              example: 404
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                    example: "qrHash"
+                  message:
+                    type: string
+                    example: "QR code has expired"
+                  value:
+                    type: string
+                    example: "abc123def456ghi789"
+
+    QRCodeListItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        qrHash:
+          type: string
+          example: "abc123def456ghi789jkl012mno345pqr"
+        prescriptionId:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174001"
+        isUsed:
+          type: boolean
+          example: false
+        isExpired:
+          type: boolean
+          example: false
+        scanCount:
+          type: integer
+          example: 0
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        expiresAt:
+          type: string
+          format: date-time
+          example: "2024-01-22T10:30:00Z"
+        prescription:
+          type: object
+          properties:
+            prescriptionNumber:
+              type: string
+              example: "RX-2024-001234"
+            diagnosis:
+              type: string
+              example: "Hypertension"
+            status:
+              type: string
+              enum: ["pending", "fulfilled", "cancelled"]
+              example: "pending"
+            patient:
+              type: object
+              properties:
+                fullName:
+                  type: string
+                  example: "John Doe"
+                email:
+                  type: string
+                  example: "john.doe@example.com"
+            doctor:
+              type: object
+              properties:
+                fullName:
+                  type: string
+                  example: "Dr. Jane Smith"
+                email:
+                  type: string
+                  example: "jane.smith@hospital.com"

@@ -1,0 +1,521 @@
+paths:
+  /pharmacy/scan:
+    post:
+      tags:
+        - Pharmacy Operations
+      summary: Scan QR code
+      description: Scan a patient's QR code to retrieve prescription information (Pharmacist only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QRCodeScanRequest"
+      responses:
+        200:
+          description: QR code scanned successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QRCodeScanResponse"
+        400:
+          description: Bad request - invalid QR code or validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        401:
+          description: Unauthorized - token required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        403:
+          description: Forbidden - pharmacist role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        404:
+          description: Prescription not found or QR code invalid
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /pharmacy/lookup:
+    post:
+      tags:
+        - Pharmacy Operations
+      summary: Lookup prescription by patient National ID
+      description: Look up a prescription using the patient Rwanda National ID (Pharmacist only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NationalIdLookupRequest"
+      responses:
+        200:
+          description: Prescription found successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NationalIdLookupResponse"
+        400:
+          description: Bad request - invalid National ID or prescription not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        401:
+          description: Unauthorized - token required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        403:
+          description: Forbidden - pharmacist role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /pharmacy/validate/{prescriptionId}:
+    post:
+      tags:
+        - Pharmacy Operations
+      summary: Validate prescription
+      description: Validate a prescription after scanning (Pharmacist only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: prescriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Prescription ID
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PrescriptionValidationRequest"
+      responses:
+        200:
+          description: Prescription validated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QRCodeScanResponse"
+        400:
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        401:
+          description: Unauthorized - token required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        403:
+          description: Forbidden - pharmacist role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        404:
+          description: Prescription not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /pharmacy/dispense/{prescriptionId}:
+    post:
+      tags:
+        - Pharmacy Operations
+      summary: Dispense prescription
+      description: Dispense medication to patient (Pharmacist only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: prescriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Prescription ID
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PrescriptionDispenseRequest"
+      responses:
+        200:
+          description: Prescription dispensed successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DispenseResult"
+        400:
+          description: Bad request - prescription not validated or validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        401:
+          description: Unauthorized - token required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        403:
+          description: Forbidden - pharmacist role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        404:
+          description: Prescription not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /pharmacy/reject/{prescriptionId}:
+    post:
+      tags:
+        - Pharmacy Operations
+      summary: Reject prescription
+      description: Reject a prescription with reason (Pharmacist only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: prescriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Prescription ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PrescriptionRejectRequest"
+      responses:
+        200:
+          description: Prescription rejected successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DispenseResult"
+        400:
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        401:
+          description: Unauthorized - token required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        403:
+          description: Forbidden - pharmacist role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        404:
+          description: Prescription not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /pharmacy/logs/{prescriptionId}:
+    get:
+      tags:
+        - Pharmacy Operations
+      summary: Get prescription logs
+      description: Get all pharmacy logs for a specific prescription (Pharmacist only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: prescriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Prescription ID
+      responses:
+        200:
+          description: Prescription logs retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrescriptionLogsResponse"
+        401:
+          description: Unauthorized - token required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        403:
+          description: Forbidden - pharmacist role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        404:
+          description: Prescription not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /pharmacy/history:
+    get:
+      tags:
+        - Pharmacy Operations
+      summary: Get pharmacist history
+      description: Get dispensing history for the authenticated pharmacist (Pharmacist only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Number of items per page
+        - name: action
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [scanned, validated, dispensed, rejected]
+          description: Filter by action type
+      responses:
+        200:
+          description: Pharmacist history retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PharmacyHistoryResponse"
+        401:
+          description: Unauthorized - token required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        403:
+          description: Forbidden - pharmacist role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /pharmacy/scan-status/{qrHash}:
+    get:
+      tags:
+        - Pharmacy Operations
+      summary: Check QR code scan status
+      description: Check if a QR code has been scanned and get scan details
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: qrHash
+          in: path
+          required: true
+          schema:
+            type: string
+          description: QR code hash to check
+      responses:
+        "200":
+          description: Scan status retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "QR code scan status retrieved"
+                  data:
+                    type: object
+                    properties:
+                      qrHash:
+                        type: string
+                        example: "479452fe905c3dfdd09094b983e140aa"
+                      isScanned:
+                        type: boolean
+                        example: true
+                      scanCount:
+                        type: integer
+                        example: 1
+                      lastScannedAt:
+                        type: string
+                        format: date-time
+                        example: "2024-12-01T10:30:00.000Z"
+                      isUsed:
+                        type: boolean
+                        example: false
+                      isExpired:
+                        type: boolean
+                        example: false
+                      expiresAt:
+                        type: string
+                        format: date-time
+                        example: "2024-12-08T10:30:00.000Z"
+        "404":
+          description: QR code not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized - token required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden - pharmacist role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /pharmacy/dispensing-history/{prescriptionId}:
+    get:
+      tags:
+        - Pharmacy Operations
+      summary: Get dispensing history
+      description: Get complete dispensing history for a prescription including inventory and financial details (Pharmacist only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: prescriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Prescription ID
+      responses:
+        200:
+          description: Dispensing history retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Dispensing history retrieved successfully"
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/PharmacyLog"
+        401:
+          description: Unauthorized - token required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        403:
+          description: Forbidden - pharmacist role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        404:
+          description: Prescription not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /pharmacy/dispensing-summary/{prescriptionId}:
+    get:
+      tags:
+        - Pharmacy Operations
+      summary: Get dispensing summary
+      description: Get financial and inventory summary for a dispensed prescription (Pharmacist only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: prescriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Prescription ID
+      responses:
+        200:
+          description: Dispensing summary retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Dispensing summary retrieved successfully"
+                  data:
+                    $ref: "#/components/schemas/DispensingSummary"
+        401:
+          description: Unauthorized - token required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        403:
+          description: Forbidden - pharmacist role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        404:
+          description: Prescription not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"

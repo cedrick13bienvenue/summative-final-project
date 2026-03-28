@@ -1,0 +1,657 @@
+components:
+  schemas:
+    Gender:
+      type: string
+      enum: ["male", "female", "other"]
+      description: Patient gender
+
+    VisitType:
+      type: string
+      enum: ["consultation", "emergency", "followup"]
+      description: Type of medical visit
+
+    PrescriptionStatus:
+      type: string
+      enum: ["pending", "fulfilled", "cancelled"]
+      description: Status of prescription
+
+    PatientRegistration:
+      type: object
+      required:
+        [
+          email,
+          password,
+          fullName,
+          dateOfBirth,
+          gender,
+          emergencyContact,
+          emergencyPhone,
+        ]
+      properties:
+        email:
+          type: string
+          format: email
+          example: patient@example.com
+          description: Patient email address
+        password:
+          type: string
+          minLength: 6
+          example: password123
+          description: Patient password (minimum 6 characters)
+        fullName:
+          type: string
+          example: Jane Smith
+          description: Patient full name
+        dateOfBirth:
+          type: string
+          format: date
+          example: "1990-01-01"
+          description: Patient date of birth (YYYY-MM-DD)
+        gender:
+          $ref: "#/components/schemas/Gender"
+        nationalId:
+          type: string
+          pattern: '^\d{16}$'
+          minLength: 16
+          maxLength: 16
+          example: "1198500123456789"
+          description: Rwanda National ID (Indangamuntu) — 16 digits (optional)
+        insuranceProvider:
+          type: string
+          example: RSSB
+          description: Insurance provider e.g. RSSB/Mutuelle de Santé, or private (optional)
+        insuranceNumber:
+          type: string
+          example: INS123456
+          description: Insurance or Mutuelle membership number (optional)
+        allergies:
+          type: array
+          items:
+            type: string
+          example: ["Penicillin", "Peanuts"]
+          description: List of patient allergies (optional)
+          default: []
+        existingConditions:
+          type: array
+          items:
+            type: string
+          example: ["Diabetes", "Hypertension"]
+          description: List of existing medical conditions (optional)
+          default: []
+        emergencyContact:
+          type: string
+          example: John Smith
+          description: Emergency contact name
+        emergencyPhone:
+          type: string
+          example: "+250788123456"
+          description: Emergency contact phone
+        phone:
+          type: string
+          example: "+250788123456"
+          description: Patient phone number (optional)
+
+    PatientProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        fullName:
+          type: string
+          example: Jane Smith
+        dateOfBirth:
+          type: string
+          format: date
+          example: "1990-01-01"
+        gender:
+          $ref: "#/components/schemas/Gender"
+        nationalId:
+          type: string
+          example: "1198500123456789"
+          description: Rwanda National ID (Indangamuntu)
+        insuranceProvider:
+          type: string
+          example: RSSB
+        insuranceNumber:
+          type: string
+          example: INS123456
+        allergies:
+          type: array
+          items:
+            type: string
+          example: ["Penicillin", "Peanuts"]
+        existingConditions:
+          type: array
+          items:
+            type: string
+          example: ["Diabetes", "Hypertension"]
+        emergencyContact:
+          type: string
+          example: John Smith
+        emergencyPhone:
+          type: string
+          example: "+250788123456"
+        phone:
+          type: string
+          example: "+250788123456"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00.000Z"
+
+    PatientUpdate:
+      type: object
+      properties:
+        fullName:
+          type: string
+          example: Jane Smith
+        dateOfBirth:
+          type: string
+          format: date
+          example: "1990-01-01"
+        gender:
+          $ref: "#/components/schemas/Gender"
+        nationalId:
+          type: string
+          pattern: '^\d{16}$'
+          minLength: 16
+          maxLength: 16
+          example: "1198500123456789"
+          description: Rwanda National ID (Indangamuntu) — 16 digits (optional)
+        insuranceProvider:
+          type: string
+          example: RSSB
+        insuranceNumber:
+          type: string
+          example: INS123456
+        allergies:
+          type: array
+          items:
+            type: string
+          example: ["Penicillin", "Peanuts"]
+        existingConditions:
+          type: array
+          items:
+            type: string
+          example: ["Diabetes", "Hypertension"]
+        emergencyContact:
+          type: string
+          example: John Smith
+        emergencyPhone:
+          type: string
+          example: "+250788123456"
+        phone:
+          type: string
+          example: "+250788123456"
+
+    MedicalVisitRequest:
+      type: object
+      required: [doctorId, visitDate, visitType, chiefComplaint]
+      properties:
+        doctorId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174001
+          description: Doctor ID performing the visit
+        visitDate:
+          type: string
+          format: date
+          example: "2024-01-01"
+          description: Date of visit (YYYY-MM-DD)
+        visitType:
+          $ref: "#/components/schemas/VisitType"
+        chiefComplaint:
+          type: string
+          example: Severe headache and fever
+          description: Main reason for visit
+        symptoms:
+          type: string
+          example: Headache, fever, nausea
+          description: Patient symptoms (optional)
+        diagnosis:
+          type: string
+          example: Migraine with fever
+          description: Doctor diagnosis (optional)
+        treatmentNotes:
+          type: string
+          example: Prescribed painkillers and rest
+          description: Treatment notes (optional)
+        recommendations:
+          type: string
+          example: Follow up in 1 week if symptoms persist
+          description: Doctor recommendations (optional)
+        hospitalName:
+          type: string
+          example: Kigali University Teaching Hospital
+          description: Hospital name where the visit took place (optional)
+
+    MedicalVisitResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174002
+        visitDate:
+          type: string
+          format: date
+          example: "2024-01-01"
+        visitType:
+          $ref: "#/components/schemas/VisitType"
+        chiefComplaint:
+          type: string
+          example: Severe headache and fever
+        symptoms:
+          type: string
+          example: Headache, fever, nausea
+        diagnosis:
+          type: string
+          example: Migraine with fever
+        treatmentNotes:
+          type: string
+          example: Prescribed painkillers and rest
+        recommendations:
+          type: string
+          example: Follow up in 1 week if symptoms persist
+        doctor:
+          type: object
+          properties:
+            fullName:
+              type: string
+              example: Dr. John Smith
+            email:
+              type: string
+              example: doctor@hospital.com
+            phone:
+              type: string
+              example: "+250788123456"
+              description: Doctor's phone number
+            specialization:
+              type: string
+              example: "General Medicine"
+              description: Doctor's medical specialization
+            hospitalName:
+              type: string
+              example: "Kigali University Teaching Hospital"
+              description: Hospital where the doctor works
+        patient:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: 123e4567-e89b-12d3-a456-426614174000
+            fullName:
+              type: string
+              example: Jane Smith
+            email:
+              type: string
+              example: patient@example.com
+            insuranceProvider:
+              type: string
+              example: RSSB
+              description: Patient's insurance provider
+            insuranceNumber:
+              type: string
+              example: INS123456
+              description: Patient's insurance policy number
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00.000Z"
+
+    PrescriptionItem:
+      type: object
+      required: [medicineName, dosage, frequency, quantity]
+      properties:
+        medicineName:
+          type: string
+          example: Paracetamol
+          description: Name of the medicine
+        dosage:
+          type: string
+          example: 500mg
+          description: Medicine dosage
+        frequency:
+          type: string
+          example: 2 times daily
+          description: How often to take the medicine
+        quantity:
+          type: integer
+          example: 20
+          description: Number of units to dispense
+        instructions:
+          type: string
+          example: Take with food
+          description: Special instructions (optional)
+
+    PrescriptionRequest:
+      type: object
+      required: [doctorId, visitId, diagnosis, items]
+      properties:
+        doctorId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174001
+          description: Doctor ID prescribing the medication
+        visitId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174002
+          description: Medical visit ID
+        diagnosis:
+          type: string
+          example: Migraine with fever
+          description: Medical diagnosis
+        doctorNotes:
+          type: string
+          example: Patient should complete full course
+          description: Additional doctor notes (optional)
+        hospitalName:
+          type: string
+          example: Kigali University Teaching Hospital
+          description: Hospital name where the prescription was issued (optional)
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/PrescriptionItem"
+          minItems: 1
+          description: List of prescription items
+
+    Prescription:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174003
+        prescriptionNumber:
+          type: string
+          example: RX-20240101-0001
+          description: Unique prescription number
+        patientId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        doctorId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174001
+        visitId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174002
+        diagnosis:
+          type: string
+          example: Migraine with fever
+        doctorNotes:
+          type: string
+          example: Patient should complete full course
+        status:
+          $ref: "#/components/schemas/PrescriptionStatus"
+        qrCodeHash:
+          type: string
+          example: abc123def456
+          description: QR code hash for verification
+        items:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/PrescriptionItem"
+              - type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    example: 123e4567-e89b-12d3-a456-426614174004
+        patient:
+          type: object
+          properties:
+            fullName:
+              type: string
+              example: Jane Smith
+            email:
+              type: string
+              example: patient@example.com
+        doctor:
+          type: object
+          properties:
+            fullName:
+              type: string
+              example: Dr. John Smith
+            email:
+              type: string
+              example: doctor@hospital.com
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00.000Z"
+
+    PrescriptionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174003
+        prescriptionNumber:
+          type: string
+          example: RX-20240101-0001
+          description: Unique prescription number
+        diagnosis:
+          type: string
+          example: Migraine with fever
+        doctorNotes:
+          type: string
+          example: Patient should complete full course
+        status:
+          $ref: "#/components/schemas/PrescriptionStatus"
+        qrCodeHash:
+          type: string
+          example: abc123def456
+          description: QR code hash for verification
+        items:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/PrescriptionItem"
+              - type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                    example: 123e4567-e89b-12d3-a456-426614174004
+        doctor:
+          type: object
+          properties:
+            fullName:
+              type: string
+              example: Dr. John Smith
+            email:
+              type: string
+              example: doctor@hospital.com
+            phone:
+              type: string
+              example: "+250788123456"
+              description: Doctor's phone number
+            specialization:
+              type: string
+              example: "General Medicine"
+              description: Doctor's medical specialization
+            hospitalName:
+              type: string
+              example: "Kigali University Teaching Hospital"
+              description: Hospital where the doctor works
+        patient:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+              example: 123e4567-e89b-12d3-a456-426614174000
+            fullName:
+              type: string
+              example: Jane Smith
+            email:
+              type: string
+              example: patient@example.com
+            insuranceProvider:
+              type: string
+              example: RSSB
+              description: Patient's insurance provider
+            insuranceNumber:
+              type: string
+              example: INS123456
+              description: Patient's insurance policy number
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00.000Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00.000Z"
+
+    OTPVerificationRequest:
+      type: object
+      required: [otpCode]
+      properties:
+        otpCode:
+          type: string
+          pattern: '^\d{6}$'
+          example: "123456"
+          description: 6-digit OTP code received via email
+          minLength: 6
+          maxLength: 6
+
+    OTPGenerationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: OTP sent successfully to your email address
+        data:
+          type: object
+          properties:
+            expiresAt:
+              type: string
+              format: date-time
+              example: "2024-01-15T10:30:00.000Z"
+              description: OTP expiration time
+            otpId:
+              type: string
+              format: uuid
+              example: 123e4567-e89b-12d3-a456-426614174005
+              description: OTP record ID
+
+    OTPErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+              example: OTP code is required for medical history access. Please request an OTP first.
+            statusCode:
+              type: integer
+              example: 400
+            requiresOTP:
+              type: boolean
+              example: true
+              description: Indicates that OTP verification is required
+
+    PatientRegistrationErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+              example: This email address is already registered. Please use a different email.
+            statusCode:
+              type: integer
+              example: 409
+            field:
+              type: string
+              example: email
+            code:
+              type: string
+              example: EMAIL_EXISTS
+              enum:
+                [
+                  EMAIL_EXISTS,
+                  INSURANCE_NUMBER_EXISTS,
+                  DUPLICATE_RECORD,
+                  VALIDATION_ERROR,
+                  INTERNAL_ERROR,
+                ]
+
+    PatientValidationErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Validation failed. Please check your input data.
+            statusCode:
+              type: integer
+              example: 400
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                    example: email
+                  message:
+                    type: string
+                    example: Please provide a valid email address
+
+    PatientInternalErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Patient registration failed. Please try again later.
+            statusCode:
+              type: integer
+              example: 500
+            code:
+              type: string
+              example: INTERNAL_ERROR

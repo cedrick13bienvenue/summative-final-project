@@ -1,0 +1,184 @@
+components:
+  schemas:
+    PharmacistRegistrationRequest:
+      type: object
+      required:
+        [
+          email,
+          password,
+          fullName,
+          licenseNumber,
+          pharmacyName,
+          pharmacyAddress,
+        ]
+      properties:
+        email:
+          type: string
+          format: email
+          example: pharmacist@pharmacy.com
+          description: Pharmacist's email address
+        password:
+          type: string
+          minLength: 6
+          example: password123
+          description: Pharmacist's password
+        fullName:
+          type: string
+          example: John Pharmacist
+          description: Pharmacist's full name
+        phone:
+          type: string
+          example: "+250788123456"
+          description: Pharmacist's phone number (optional)
+        nationalId:
+          type: string
+          pattern: '^\d{16}$'
+          minLength: 16
+          maxLength: 16
+          example: "1198500123456789"
+          description: Rwanda National ID (Indangamuntu) — 16 digits (optional)
+        licenseNumber:
+          type: string
+          example: PH-RW-2024-001
+          description: Pharmacist's license number
+        pharmacyName:
+          type: string
+          example: Kigali Central Pharmacy
+          description: Name of the pharmacy
+        pharmacyAddress:
+          type: string
+          example: "KN 4 Ave, Kigali, Rwanda"
+          description: Address of the pharmacy
+
+    PharmacistProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        userId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174001
+        email:
+          type: string
+          format: email
+          example: pharmacist@pharmacy.com
+        fullName:
+          type: string
+          example: John Pharmacist
+        licenseNumber:
+          type: string
+          example: PH-RW-2024-001
+        pharmacyName:
+          type: string
+          example: Kigali Central Pharmacy
+        pharmacyAddress:
+          type: string
+          example: "KN 4 Ave, Kigali, Rwanda"
+        isVerified:
+          type: boolean
+          example: true
+        phone:
+          type: string
+          example: "+250788123456"
+        nationalId:
+          type: string
+          example: "1198500123456789"
+          description: Rwanda National ID (Indangamuntu)
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00.000Z"
+
+    PharmacistRegistrationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Pharmacist registered successfully
+        data:
+          type: object
+          properties:
+            user:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                email:
+                  type: string
+                  format: email
+                fullName:
+                  type: string
+                role:
+                  type: string
+                  enum: ["pharmacist"]
+                phone:
+                  type: string
+            pharmacist:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                licenseNumber:
+                  type: string
+                pharmacyName:
+                  type: string
+                pharmacyAddress:
+                  type: string
+                isVerified:
+                  type: boolean
+
+    PharmacistUpdateRequest:
+      type: object
+      properties:
+        licenseNumber:
+          type: string
+          example: PH-RW-2024-002
+          description: Updated license number
+        pharmacyName:
+          type: string
+          example: New Pharmacy Name
+          description: Updated pharmacy name
+        pharmacyAddress:
+          type: string
+          example: "New Address, Kigali, Rwanda"
+          description: Updated pharmacy address
+
+    PharmacistListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/PharmacistProfile"
+
+    PharmacistDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: "#/components/schemas/PharmacistProfile"
+
+    PharmacistUpdateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Pharmacist profile updated successfully
+        data:
+          $ref: "#/components/schemas/PharmacistProfile"

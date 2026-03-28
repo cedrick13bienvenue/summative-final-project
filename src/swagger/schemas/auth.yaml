@@ -1,0 +1,170 @@
+components:
+  schemas:
+    UserRole:
+      type: string
+      enum: ["patient", "doctor", "pharmacist", "admin"]
+      description: User role in the system
+
+    UserRegistration:
+      type: object
+      required: [email, password, fullName, role]
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+          description: User email address
+        password:
+          type: string
+          minLength: 6
+          example: password123
+          description: User password (minimum 6 characters)
+        fullName:
+          type: string
+          example: John Doe
+          description: User full name
+        role:
+          $ref: "#/components/schemas/UserRole"
+        phone:
+          type: string
+          example: "+1234567890"
+          description: User phone number (optional)
+        nationalId:
+          type: string
+          pattern: '^\d{16}$'
+          minLength: 16
+          maxLength: 16
+          example: "1198500123456789"
+          description: Rwanda National ID (Indangamuntu) — 16 digits (optional)
+
+    UserLogin:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+          description: User email address
+        password:
+          type: string
+          example: password123
+          description: User password
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        email:
+          type: string
+          format: email
+          example: user@example.com
+        fullName:
+          type: string
+          example: John Doe
+        role:
+          $ref: "#/components/schemas/UserRole"
+        phone:
+          type: string
+          example: "+1234567890"
+        nationalId:
+          type: string
+          example: "1198500123456789"
+          description: Rwanda National ID (Indangamuntu)
+        patientId:
+          type: string
+          format: uuid
+          example: ca5152c7-5300-4ea9-b519-82ca32a16f88
+          description: Patient ID (only present for patient users)
+        isActive:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00.000Z"
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Login successful
+        data:
+          type: object
+          properties:
+            user:
+              $ref: "#/components/schemas/UserProfile"
+            token:
+              type: string
+              example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+              description: JWT authentication token
+
+    PasswordChange:
+      type: object
+      required: [currentPassword, newPassword]
+      properties:
+        currentPassword:
+          type: string
+          example: oldpassword123
+          description: Current password
+        newPassword:
+          type: string
+          minLength: 6
+          example: newpassword123
+          description: New password (minimum 6 characters)
+
+    PasswordResetRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+          description: User email address for password reset
+
+    PasswordReset:
+      type: object
+      required: [email, otpCode, newPassword]
+      properties:
+        email:
+          type: string
+          format: email
+          example: user@example.com
+          description: User email address
+        otpCode:
+          type: string
+          pattern: "^[0-9]{6}$"
+          example: "123456"
+          description: 6-digit OTP code received via email
+        newPassword:
+          type: string
+          minLength: 8
+          pattern: '^(?=.*[a-zA-Z])(?=.*\d)'
+          example: newpassword123
+          description: New password (minimum 8 characters with at least one letter and one number)
+
+    PasswordResetResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Password reset OTP sent successfully to your email address
+        data:
+          type: object
+          properties:
+            expiresAt:
+              type: string
+              format: date-time
+              example: "2024-01-01T12:00:00.000Z"
+              description: OTP expiration time

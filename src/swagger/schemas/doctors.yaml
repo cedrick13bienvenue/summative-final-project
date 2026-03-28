@@ -1,0 +1,256 @@
+components:
+  schemas:
+    DoctorRegistrationRequest:
+      type: object
+      required:
+        [email, password, fullName, licenseNumber, specialization, hospitalName]
+      properties:
+        email:
+          type: string
+          format: email
+          example: michael.johnson@hospital.com
+          description: Doctor's email address
+        password:
+          type: string
+          minLength: 6
+          example: password123
+          description: Doctor's password
+        fullName:
+          type: string
+          example: Dr. Michael Johnson
+          description: Doctor's full name
+        phone:
+          type: string
+          example: "+250788123456"
+          description: Doctor's phone number (optional)
+        nationalId:
+          type: string
+          pattern: '^\d{16}$'
+          minLength: 16
+          maxLength: 16
+          example: "1198500123456789"
+          description: Rwanda National ID (Indangamuntu) — 16 digits (optional)
+        licenseNumber:
+          type: string
+          example: MD-RW-2024-001
+          description: Doctor's medical license number
+        specialization:
+          type: string
+          example: General Medicine
+          description: Doctor's medical specialization
+        hospitalName:
+          type: string
+          example: City General Hospital
+          description: Hospital where doctor works
+
+    DoctorProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174000
+        userId:
+          type: string
+          format: uuid
+          example: 123e4567-e89b-12d3-a456-426614174001
+        email:
+          type: string
+          format: email
+          example: michael.johnson@hospital.com
+        fullName:
+          type: string
+          example: Dr. Michael Johnson
+        licenseNumber:
+          type: string
+          example: MD-RW-2024-001
+        specialization:
+          type: string
+          example: General Medicine
+        hospitalName:
+          type: string
+          example: City General Hospital
+        isVerified:
+          type: boolean
+          example: true
+        phone:
+          type: string
+          example: "+250788123456"
+        nationalId:
+          type: string
+          example: "1198500123456789"
+          description: Rwanda National ID (Indangamuntu)
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-01-01T00:00:00.000Z"
+
+    DoctorRegistrationResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Doctor registered successfully
+        data:
+          type: object
+          properties:
+            user:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                email:
+                  type: string
+                  format: email
+                fullName:
+                  type: string
+                role:
+                  type: string
+                  enum: ["doctor"]
+                phone:
+                  type: string
+            doctor:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                licenseNumber:
+                  type: string
+                specialization:
+                  type: string
+                hospitalName:
+                  type: string
+                isVerified:
+                  type: boolean
+
+    DoctorUpdateRequest:
+      type: object
+      properties:
+        licenseNumber:
+          type: string
+          example: MD-RW-2024-002
+          description: Updated license number
+        specialization:
+          type: string
+          example: Cardiology
+          description: Updated specialization
+        hospitalName:
+          type: string
+          example: Rwanda Military Hospital
+          description: Updated hospital name
+
+    DoctorListResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/DoctorProfile"
+
+    DoctorDetailResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          $ref: "#/components/schemas/DoctorProfile"
+
+    DoctorUpdateResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Doctor profile updated successfully
+        data:
+          $ref: "#/components/schemas/DoctorProfile"
+
+    DoctorRegistrationErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+              example: This license number already exists. Please use a different license number.
+            statusCode:
+              type: integer
+              example: 409
+            field:
+              type: string
+              example: licenseNumber
+            code:
+              type: string
+              example: LICENSE_NUMBER_EXISTS
+              enum:
+                [
+                  LICENSE_NUMBER_EXISTS,
+                  EMAIL_EXISTS,
+                  DUPLICATE_RECORD,
+                  VALIDATION_ERROR,
+                  INTERNAL_ERROR,
+                ]
+
+    DoctorValidationErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Validation failed. Please check your input data.
+            statusCode:
+              type: integer
+              example: 400
+            code:
+              type: string
+              example: VALIDATION_ERROR
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                    example: email
+                  message:
+                    type: string
+                    example: Please provide a valid email address
+
+    DoctorInternalErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Doctor registration failed. Please try again later.
+            statusCode:
+              type: integer
+              example: 500
+            code:
+              type: string
+              example: INTERNAL_ERROR

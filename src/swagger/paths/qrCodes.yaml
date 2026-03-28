@@ -1,0 +1,353 @@
+# QR Code Management Endpoints
+
+paths:
+  /qr-codes:
+    get:
+      tags:
+        - QR Codes
+      summary: Get all QR codes with pagination
+      description: Retrieve a paginated list of all QR codes - admin only
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Page number for pagination
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Number of QR codes per page
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: ["createdAt", "updatedAt", "qrHash", "scanCount"]
+            default: createdAt
+          description: Field to sort by
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: ["ASC", "DESC"]
+            default: DESC
+          description: Sort order
+      responses:
+        200:
+          description: QR codes retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/QRCodeListItem"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+        401:
+          $ref: "#/components/responses/Unauthorized"
+        403:
+          $ref: "#/components/responses/Forbidden"
+        500:
+          $ref: "#/components/responses/InternalServerError"
+  /qr-codes/generate/{prescriptionId}:
+    post:
+      tags:
+        - QR Codes
+      summary: Generate QR code for a prescription
+      description: Creates a new QR code for the specified prescription with encrypted data (Doctor, Admin only)
+      parameters:
+        - name: prescriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the prescription
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: QR code generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      qrCode:
+                        $ref: "#/components/schemas/QRCode"
+                      qrCodeImage:
+                        type: string
+                        format: base64
+                        description: Base64 encoded QR code image
+                      prescription:
+                        $ref: "#/components/schemas/Prescription"
+        400:
+          description: Bad Request - Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        401:
+          description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        403:
+          description: Forbidden - Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        404:
+          description: Not Found - Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # Note: QR code verification is now handled through the pharmacy workflow
+  # Use POST /pharmacy/scan instead of this standalone verification endpoint
+
+  /qr-codes/stats/{qrHash}:
+    get:
+      tags:
+        - QR Codes
+      summary: Get QR code statistics
+      description: Returns statistics about QR code usage and scans
+      parameters:
+        - name: qrHash
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The QR code hash to get stats for
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: QR code statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      qrHash:
+                        type: string
+                        example: "abc123def456"
+                      scanCount:
+                        type: integer
+                        example: 5
+                      isUsed:
+                        type: boolean
+                        example: false
+                      createdAt:
+                        type: string
+                        format: date-time
+                      expiresAt:
+                        type: string
+                        format: date-time
+                      lastScannedAt:
+                        type: string
+                        format: date-time
+                        nullable: true
+        400:
+          description: Bad Request - Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        401:
+          description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        403:
+          description: Forbidden - Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        404:
+          description: Not Found - Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /qr-codes/email/{prescriptionId}:
+    post:
+      tags:
+        - QR Codes
+      summary: Send prescription email with QR code
+      description: Sends an email to the patient with prescription details and QR code attachment (Doctor, Admin only)
+      parameters:
+        - name: prescriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the prescription
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Email sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                        example: "Prescription email sent successfully"
+                      emailSent:
+                        type: boolean
+                        example: true
+                      qrCodeGenerated:
+                        type: boolean
+                        example: true
+        400:
+          description: Bad Request - Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        401:
+          description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        403:
+          description: Forbidden - Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        404:
+          description: Not Found - Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /qr-codes/{prescriptionId}:
+    get:
+      tags:
+        - QR Codes
+      summary: Get QR code for prescription
+      description: Retrieves the QR code information for a specific prescription (Doctor, Admin, Patient only)
+      parameters:
+        - name: prescriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: The ID of the prescription
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: QR code retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      qrCode:
+                        $ref: "#/components/schemas/QRCode"
+                      prescription:
+                        $ref: "#/components/schemas/Prescription"
+                      qrCodeImage:
+                        type: string
+                        format: base64
+                        description: Base64 encoded QR code image
+        400:
+          description: Bad Request - Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        401:
+          description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        403:
+          description: Forbidden - Insufficient permissions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        404:
+          description: Not Found - Resource not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        500:
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"

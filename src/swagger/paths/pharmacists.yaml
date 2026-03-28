@@ -1,0 +1,211 @@
+paths:
+  /pharmacists/register:
+    post:
+      tags:
+        - Pharmacists
+      summary: Register a new pharmacist
+      description: Register a new pharmacist with complete professional information (Admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PharmacistRegistrationRequest"
+      responses:
+        201:
+          description: Pharmacist registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PharmacistRegistrationResponse"
+        400:
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        401:
+          description: Unauthorized - token required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        403:
+          description: Forbidden - admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /pharmacists:
+    get:
+      tags:
+        - Pharmacists
+      summary: Get all pharmacists
+      description: Retrieve a list of all pharmacists in the system (Admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: List of pharmacists retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PharmacistListResponse"
+        401:
+          description: Unauthorized - token required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        403:
+          description: Forbidden - admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /pharmacists/{pharmacistId}:
+    get:
+      tags:
+        - Pharmacists
+      summary: Get pharmacist by ID
+      description: Retrieve a specific pharmacist's information by ID (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: pharmacistId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Pharmacist ID
+      responses:
+        200:
+          description: Pharmacist information retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PharmacistDetailResponse"
+        401:
+          description: Unauthorized - token required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        403:
+          description: Forbidden - admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        404:
+          description: Pharmacist not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    put:
+      tags:
+        - Pharmacists
+      summary: Update pharmacist profile
+      description: Update a pharmacist's professional information (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: pharmacistId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Pharmacist ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PharmacistUpdateRequest"
+      responses:
+        200:
+          description: Pharmacist profile updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PharmacistUpdateResponse"
+        400:
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        401:
+          description: Unauthorized - token required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        403:
+          description: Forbidden - admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        404:
+          description: Pharmacist not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+    delete:
+      tags:
+        - Pharmacists
+      summary: Delete pharmacist
+      description: Delete a pharmacist from the system (Admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: pharmacistId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Pharmacist ID
+      responses:
+        200:
+          description: Pharmacist deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Pharmacist deleted successfully
+        401:
+          description: Unauthorized - token required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        403:
+          description: Forbidden - admin role required
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        404:
+          description: Pharmacist not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"

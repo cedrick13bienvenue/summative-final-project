@@ -1,0 +1,254 @@
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+              example: Error message description
+            statusCode:
+              type: integer
+              example: 400
+
+    Success:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: Operation completed successfully
+        data:
+          type: object
+          description: Response data object
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+          description: Current page number
+        limit:
+          type: integer
+          example: 10
+          description: Number of items per page
+        total:
+          type: integer
+          example: 100
+          description: Total number of items
+        totalPages:
+          type: integer
+          example: 10
+          description: Total number of pages
+        hasNextPage:
+          type: boolean
+          example: true
+          description: Whether there is a next page
+        hasPrevPage:
+          type: boolean
+          example: false
+          description: Whether there is a previous page
+
+    PaginationParams:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number (starts from 1)
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+          description: Number of items per page (max 100)
+
+    AdvancedPaginationParams:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number (starts from 1)
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 100
+          default: 10
+          description: Number of items per page (max 100)
+        sortBy:
+          type: string
+          enum:
+            [
+              "createdAt",
+              "updatedAt",
+              "fullName",
+              "email",
+              "visitDate",
+              "prescriptionNumber",
+            ]
+          default: createdAt
+          description: Field to sort by
+        sortOrder:
+          type: string
+          enum: ["ASC", "DESC"]
+          default: DESC
+          description: Sort order
+
+    MedicalHistoryPaginationParams:
+      type: object
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          default: 1
+          description: Page number (starts from 1)
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+          description: Number of items per page (max 50)
+        type:
+          type: string
+          enum: ["visits", "prescriptions", "all"]
+          default: all
+          description: Type of medical history to retrieve
+        sortBy:
+          type: string
+          enum: ["createdAt", "visitDate", "prescriptionNumber"]
+          default: createdAt
+          description: Field to sort by
+        sortOrder:
+          type: string
+          enum: ["ASC", "DESC"]
+          default: DESC
+          description: Sort order
+
+    ValidationError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+              example: "Validation failed"
+            statusCode:
+              type: integer
+              example: 400
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                    example: "email"
+                  message:
+                    type: string
+                    example: "Email is required"
+                  value:
+                    type: string
+                    example: ""
+
+  responses:
+    BadRequest:
+      description: Bad Request - Invalid input data
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ValidationError"
+
+    Unauthorized:
+      description: Unauthorized - Invalid or missing authentication token
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Unauthorized - Invalid or missing token"
+                  statusCode:
+                    type: integer
+                    example: 401
+
+    Forbidden:
+      description: Forbidden - Insufficient permissions
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Forbidden - Insufficient permissions"
+                  statusCode:
+                    type: integer
+                    example: 403
+
+    NotFound:
+      description: Not Found - Resource not found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Resource not found"
+                  statusCode:
+                    type: integer
+                    example: 404
+
+    InternalServerError:
+      description: Internal Server Error - Server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              error:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Internal server error"
+                  statusCode:
+                    type: integer
+                    example: 500
