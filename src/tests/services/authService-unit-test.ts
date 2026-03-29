@@ -1,11 +1,61 @@
 import { AuthService } from '../../services/authService';
 import { User, TokenBlacklist } from '../../models';
-import Doctor from '../../models/Doctor';
 import { UserRole } from '../../models/User';
 import { sequelize } from '../../database/config/database';
 
-jest.mock('../../models');
-jest.mock('../../models/Doctor');
+jest.mock('../../models/User', () => ({
+  UserRole: {
+    ADMIN: 'admin',
+    DOCTOR: 'doctor',
+    PATIENT: 'patient',
+    PHARMACIST: 'pharmacist',
+  },
+  default: {
+    findOne: jest.fn(),
+    findByPk: jest.fn(),
+    create: jest.fn(),
+  },
+  __esModule: true,
+}));
+jest.mock('../../models', () => {
+  const UserMock: any = jest.fn().mockImplementation(() => ({
+    hashPassword: jest.fn().mockResolvedValue('hashed-pw'),
+  }));
+  UserMock.findOne = jest.fn();
+  UserMock.findByPk = jest.fn();
+  UserMock.create = jest.fn();
+  UserMock.hasOne = jest.fn();
+  return {
+    User: UserMock,
+    TokenBlacklist: {
+      isTokenBlacklisted: jest.fn(),
+      blacklistToken: jest.fn(),
+      cleanupExpiredTokens: jest.fn(),
+    },
+    UserRole: {
+      ADMIN: 'admin',
+      DOCTOR: 'doctor',
+      PATIENT: 'patient',
+      PHARMACIST: 'pharmacist',
+    },
+  };
+});
+jest.mock('../../models/Doctor', () => ({
+  default: {
+    create: jest.fn(),
+    findOne: jest.fn(),
+    findByPk: jest.fn(),
+  },
+  __esModule: true,
+}));
+jest.mock('../../models/Patient', () => ({
+  default: {
+    create: jest.fn(),
+    findOne: jest.fn(),
+    findByPk: jest.fn(),
+  },
+  __esModule: true,
+}));
 jest.mock('../../database/config/database', () => ({
   sequelize: {
     transaction: jest.fn(),
@@ -24,12 +74,14 @@ jest.mock('../../services/otpService', () => ({
 
 const MockUser = User as jest.Mocked<typeof User>;
 const MockTokenBlacklist = TokenBlacklist as jest.Mocked<typeof TokenBlacklist>;
-const MockDoctor = Doctor as jest.Mocked<typeof Doctor>;
 
 const mockTransaction = {
   commit: jest.fn(),
   rollback: jest.fn(),
 };
+
+// Set required env vars
+process.env['JWT_SECRET'] = 'test-jwt-secret-for-unit-tests';
 
 describe('AuthService - Unit', () => {
   beforeEach(() => {
@@ -96,7 +148,7 @@ describe('AuthService - Unit', () => {
         fullName: 'Dr. Smith',
         role: UserRole.DOCTOR,
       } as any);
-      MockDoctor.create.mockResolvedValue({} as any);
+      require('../../models/Doctor').default.create.mockResolvedValue({} as any);
 
       await AuthService.register({
         email: 'doc@example.com',
@@ -105,7 +157,7 @@ describe('AuthService - Unit', () => {
         role: UserRole.DOCTOR,
       });
 
-      expect(MockDoctor.create).toHaveBeenCalledWith(
+      expect(require('../../models/Doctor').default.create).toHaveBeenCalledWith(
         expect.objectContaining({ isVerified: false }),
         expect.objectContaining({ transaction: mockTransaction })
       );
@@ -235,13 +287,14 @@ describe('AuthService - Unit', () => {
         comparePassword: jest.fn().mockResolvedValue(true),
         hashPassword: jest.fn().mockResolvedValue('new-hash'),
         save: jest.fn().mockResolvedValue(undefined),
+        update: jest.fn().mockResolvedValue(undefined),
         passwordHash: 'old-hash',
       };
       MockUser.findByPk.mockResolvedValue(mockUser as any);
 
       await AuthService.changePassword('user-001', 'oldPw', 'newPw123');
       expect(mockUser.comparePassword).toHaveBeenCalledWith('oldPw');
-      expect(mockUser.save).toHaveBeenCalled();
+      expect(mockUser.update).toHaveBeenCalled();
     });
 
     it('should throw if current password is wrong', async () => {

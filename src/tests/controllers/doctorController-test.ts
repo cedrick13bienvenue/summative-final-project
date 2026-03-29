@@ -1,10 +1,13 @@
 import { Request, Response } from 'express';
 import { DoctorController } from '../../controllers/doctorController';
 import { DoctorService } from '../../services/doctorService';
+import { AuthService } from '../../services/authService';
 import { AuthenticatedRequest } from '../../middleware/auth';
 
 jest.mock('../../services/doctorService');
+jest.mock('../../services/authService');
 const MockDoctorService = DoctorService as jest.Mocked<typeof DoctorService>;
+const MockAuthService = AuthService as jest.Mocked<typeof AuthService>;
 
 describe('DoctorController', () => {
   let mockReq: Partial<Request | AuthenticatedRequest>;
@@ -30,6 +33,10 @@ describe('DoctorController', () => {
         hospitalName: 'CHUK',
       };
       mockReq.body = body;
+      MockAuthService.register.mockResolvedValue({
+        user: { id: 'user-doc-001', email: 'doc@hospital.rw', fullName: 'Dr. Test', role: 'doctor' as any, phone: undefined },
+        token: 'mock-token',
+      });
       MockDoctorService.createDoctorProfile.mockResolvedValue({ doctorId: 'doc-001' } as any);
 
       await DoctorController.registerDoctor(mockReq as Request, mockRes as Response);
@@ -77,13 +84,13 @@ describe('DoctorController', () => {
     });
   });
 
-  describe('updateDoctor', () => {
+  describe('updateDoctorProfile', () => {
     it('should update a doctor profile', async () => {
       mockReq.params = { doctorId: 'doc-001' };
       mockReq.body = { specialization: 'Cardiology' };
       MockDoctorService.updateDoctorProfile.mockResolvedValue({ id: 'doc-001' } as any);
 
-      await DoctorController.updateDoctor(mockReq as Request, mockRes as Response);
+      await DoctorController.updateDoctorProfile(mockReq as Request, mockRes as Response);
       expect(mockRes.status).toHaveBeenCalledWith(200);
     });
   });
@@ -91,7 +98,7 @@ describe('DoctorController', () => {
   describe('deleteDoctor', () => {
     it('should delete a doctor', async () => {
       mockReq.params = { doctorId: 'doc-001' };
-      MockDoctorService.deleteDoctor.mockResolvedValue(undefined as any);
+      MockDoctorService.deleteDoctor.mockResolvedValue(true as any);
 
       await DoctorController.deleteDoctor(mockReq as Request, mockRes as Response);
       expect(mockRes.status).toHaveBeenCalledWith(200);

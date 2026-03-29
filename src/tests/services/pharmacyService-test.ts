@@ -29,25 +29,25 @@ describe('PharmacyService', () => {
         prescriptionData: { prescriptionId: 'presc-001' },
       });
 
-      const mockSave = jest.fn();
+      const mockUpdate = jest.fn().mockResolvedValue({});
       MockPrescription.findByPk.mockResolvedValue({
         id: 'presc-001',
         status: PrescriptionStatus.PENDING,
-        save: mockSave,
+        update: mockUpdate,
         patient: { user: { fullName: 'Patient One', nationalId: '1234567890123456' } },
         doctor: { user: { fullName: 'Dr. Jean' } },
         items: [],
         visit: null,
-        qrCode: { qrHash: 'hash-001' },
+        qrCode: { qrHash: 'hash-001', isExpired: jest.fn().mockReturnValue(false) },
       } as any);
 
       MockPharmacyLog.create.mockResolvedValue({} as any);
 
       const result = await PharmacyService.scanQRCode('hash-001', 'pharm-001');
       expect(result.isValid).toBe(true);
-      expect(mockSave).toHaveBeenCalled();
+      expect(mockUpdate).toHaveBeenCalled();
       expect(MockPharmacyLog.create).toHaveBeenCalledWith(
-        expect.objectContaining({ action: PharmacyAction.SCAN })
+        expect.objectContaining({ action: PharmacyAction.SCANNED })
       );
     });
 
@@ -76,11 +76,11 @@ describe('PharmacyService', () => {
 
   describe('validatePrescription', () => {
     it('should validate a SCANNED prescription', async () => {
-      const mockSave = jest.fn();
+      const mockUpdate = jest.fn().mockResolvedValue({});
       MockPrescription.findByPk.mockResolvedValue({
         id: 'presc-001',
         status: PrescriptionStatus.SCANNED,
-        save: mockSave,
+        update: mockUpdate,
         patient: { user: { fullName: 'Patient' } },
         doctor: { user: { fullName: 'Doctor' } },
         items: [],
@@ -89,49 +89,49 @@ describe('PharmacyService', () => {
 
       const result = await PharmacyService.validatePrescription('presc-001', 'pharm-001', 'All good');
       expect(result.success).toBe(true);
-      expect(mockSave).toHaveBeenCalled();
+      expect(mockUpdate).toHaveBeenCalled();
     });
 
-    it('should throw if prescription not in SCANNED status', async () => {
+    it('should return success:false if prescription not in SCANNED status', async () => {
       MockPrescription.findByPk.mockResolvedValue({
         id: 'presc-001',
         status: PrescriptionStatus.PENDING,
       } as any);
 
-      await expect(
-        PharmacyService.validatePrescription('presc-001', 'pharm-001', '')
-      ).rejects.toThrow();
+      const result = await PharmacyService.validatePrescription('presc-001', 'pharm-001', '');
+      expect(result.success).toBe(false);
     });
 
-    it('should throw if prescription not found', async () => {
+    it('should return success:false if prescription not found', async () => {
       MockPrescription.findByPk.mockResolvedValue(null);
-      await expect(
-        PharmacyService.validatePrescription('ghost-id', 'pharm-001', '')
-      ).rejects.toThrow();
+      const result = await PharmacyService.validatePrescription('ghost-id', 'pharm-001', '');
+      expect(result.success).toBe(false);
     });
   });
 
   describe('rejectPrescription', () => {
     it('should reject a SCANNED prescription', async () => {
-      const mockSave = jest.fn();
+      const mockUpdate = jest.fn().mockResolvedValue({});
       MockPrescription.findByPk.mockResolvedValue({
         id: 'presc-001',
         status: PrescriptionStatus.SCANNED,
-        save: mockSave,
+        update: mockUpdate,
+        prescriptionNumber: 'RX-001',
       } as any);
       MockPharmacyLog.create.mockResolvedValue({} as any);
 
       const result = await PharmacyService.rejectPrescription('presc-001', 'pharm-001', 'Wrong patient');
       expect(result.success).toBe(true);
-      expect(mockSave).toHaveBeenCalled();
+      expect(mockUpdate).toHaveBeenCalled();
     });
 
     it('should reject a VALIDATED prescription', async () => {
-      const mockSave = jest.fn();
+      const mockUpdate = jest.fn().mockResolvedValue({});
       MockPrescription.findByPk.mockResolvedValue({
         id: 'presc-001',
         status: PrescriptionStatus.VALIDATED,
-        save: mockSave,
+        update: mockUpdate,
+        prescriptionNumber: 'RX-001',
       } as any);
       MockPharmacyLog.create.mockResolvedValue({} as any);
 
@@ -139,15 +139,14 @@ describe('PharmacyService', () => {
       expect(result.success).toBe(true);
     });
 
-    it('should throw if prescription is not in a rejectable state', async () => {
+    it('should return success:false if prescription is not in a rejectable state', async () => {
       MockPrescription.findByPk.mockResolvedValue({
         id: 'presc-001',
         status: PrescriptionStatus.FULFILLED,
       } as any);
 
-      await expect(
-        PharmacyService.rejectPrescription('presc-001', 'pharm-001', 'reason')
-      ).rejects.toThrow();
+      const result = await PharmacyService.rejectPrescription('presc-001', 'pharm-001', 'reason');
+      expect(result.success).toBe(false);
     });
   });
 

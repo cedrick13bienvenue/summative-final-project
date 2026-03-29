@@ -1,9 +1,12 @@
 import { Request, Response } from 'express';
 import { PharmacistController } from '../../controllers/pharmacistController';
 import { PharmacistService } from '../../services/pharmacistService';
+import { AuthService } from '../../services/authService';
 
 jest.mock('../../services/pharmacistService');
+jest.mock('../../services/authService');
 const MockPharmacistService = PharmacistService as jest.Mocked<typeof PharmacistService>;
+const MockAuthService = AuthService as jest.Mocked<typeof AuthService>;
 
 describe('PharmacistController', () => {
   let mockReq: Partial<Request>;
@@ -28,6 +31,10 @@ describe('PharmacistController', () => {
         pharmacyName: 'Test Pharmacy',
         pharmacyAddress: 'KN 1 Ave',
       };
+      MockAuthService.register.mockResolvedValue({
+        user: { id: 'user-ph-001', email: 'pharm@rw.rw', fullName: 'Jean Pharm', role: 'pharmacist' as any, phone: undefined },
+        token: 'mock-token',
+      });
       MockPharmacistService.createPharmacistProfile.mockResolvedValue({ pharmacistId: 'ph-001' } as any);
 
       await PharmacistController.registerPharmacist(mockReq as Request, mockRes as Response);

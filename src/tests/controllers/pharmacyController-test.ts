@@ -100,6 +100,7 @@ describe('PharmacyController', () => {
 
     it('should return 401 if unauthenticated', async () => {
       mockReq.user = undefined;
+      mockReq.params = { prescriptionId: 'presc-001' };
       await PharmacyController.validatePrescription(mockReq as AuthenticatedRequest, mockRes as Response);
       expect(mockRes.status).toHaveBeenCalledWith(401);
     });

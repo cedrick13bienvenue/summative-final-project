@@ -59,7 +59,7 @@ describe('PharmacyLog Model', () => {
       } as any);
 
       expect(log.batchNumber).toBe('BATCH-2026-01');
-      expect(log.expiryDate).toEqual(new Date('2027-12-31'));
+      expect(log.expiryDate).toBe('2027-12-31');
     });
   });
 

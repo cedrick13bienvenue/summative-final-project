@@ -25,8 +25,6 @@
     "db:fresh": "sequelize-cli db:drop && sequelize-cli db:create && sequelize-cli db:migrate && sequelize-cli db:seed:all",
     "db:clear": "ts-node clear-database-data.ts",
     "test": "jest",
-    "test:coverage": "jest --coverage",
-    "test:watch": "jest --watch",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "test:ci": "jest --coverage --watchAll=false",

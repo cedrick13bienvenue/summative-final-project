@@ -51,6 +51,10 @@ describe('Prescription Model', () => {
       expect(PrescriptionStatus.PENDING).toBe('pending');
       expect(PrescriptionStatus.FULFILLED).toBe('fulfilled');
       expect(PrescriptionStatus.CANCELLED).toBe('cancelled');
+      expect(PrescriptionStatus.SCANNED).toBe('scanned');
+      expect(PrescriptionStatus.VALIDATED).toBe('validated');
+      expect(PrescriptionStatus.DISPENSED).toBe('dispensed');
+      expect(PrescriptionStatus.REJECTED).toBe('rejected');
     });
 
     it('should contain all status options', () => {
@@ -58,7 +62,11 @@ describe('Prescription Model', () => {
       expect(statusValues).toContain('pending');
       expect(statusValues).toContain('fulfilled');
       expect(statusValues).toContain('cancelled');
-      expect(statusValues).toHaveLength(3);
+      expect(statusValues).toContain('scanned');
+      expect(statusValues).toContain('validated');
+      expect(statusValues).toContain('dispensed');
+      expect(statusValues).toContain('rejected');
+      expect(statusValues).toHaveLength(7);
     });
   });
 
