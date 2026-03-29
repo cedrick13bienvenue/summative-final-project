@@ -6,6 +6,23 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
+## Live Deployment
+
+| Resource | URL |
+|----------|-----|
+| API Base | https://medconnect-backend-ig4x.onrender.com/api/v1 |
+| Swagger Docs | https://medconnect-backend-ig4x.onrender.com/api/v1/docs |
+| QR Scanner | https://medconnect-backend-ig4x.onrender.com/qr-scanner.html |
+| Health Check | https://medconnect-backend-ig4x.onrender.com/health |
+
+> **Note:** Hosted on Render free tier — first request after inactivity may take ~30 seconds to wake up.
+
+### Default Admin Credentials
+```
+Email:    admin@medconnect.com
+Password: admin123!@#
+```
+
 A comprehensive Digital Prescription & Patient Records System built with Express.js, TypeScript, and PostgreSQL. This system enables healthcare providers to create digital prescriptions with QR codes, manage patient records, and facilitate seamless pharmacy operations.
 
 ## Features
@@ -643,4 +660,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
-For more detailed API documentation, visit the Swagger UI at `http://localhost:3000/api-docs` when the server is running.
+For interactive API documentation, visit the live Swagger UI at https://medconnect-backend-ig4x.onrender.com/api/v1/docs
