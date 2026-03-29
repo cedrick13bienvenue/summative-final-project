@@ -6,7 +6,7 @@ import './models';
 import { routers } from './routes';
 import { swaggerRouter } from './routes/swaggerRoutes';
 import { sanitizeInput } from './middleware/validation';
-import { basicRateLimiter, rateLimitMonitor } from './middleware/rateLimiter';
+import { basicRateLimiter } from './middleware/rateLimiter';
 
 dotenv.config();
 
@@ -17,11 +17,9 @@ const IS_DOCS_ONLY = process.env['DOCS_ONLY'] === 'true';
 app.use(cors());
 app.use(express.json());
 app.use(sanitizeInput);
-app.use(basicRateLimiter);
-app.use(rateLimitMonitor);
 app.use(express.static('public'));
 
-// Health check endpoint
+// Health check must be before rate limiter so Render's health checker is never blocked
 app.get('/health', (_req, res) => {
   res.status(200).json({
     status: 'OK',
@@ -29,6 +27,8 @@ app.get('/health', (_req, res) => {
     mode: IS_DOCS_ONLY ? 'docs-only' : 'full-api'
   });
 });
+
+app.use(basicRateLimiter);
 
 // Serve Swagger UI at /api/v1/docs - ALWAYS ACTIVE
 app.use('/api/v1', swaggerRouter);
