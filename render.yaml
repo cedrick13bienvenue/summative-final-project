@@ -9,8 +9,8 @@ services:
     name: medconnect-backend
     env: node
     plan: free
-    buildCommand: npm install && npm run build && npx sequelize-cli db:migrate && npx sequelize-cli db:seed --seed 01-admin-user.js
-    startCommand: npm start
+    buildCommand: npm install && npm run build
+    startCommand: npx sequelize-cli db:migrate && (npx sequelize-cli db:seed --seed 01-admin-user.js || true) && npm start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
