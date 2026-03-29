@@ -19,16 +19,12 @@ const options: any = {
     },
     servers: [
       {
-        url: process.env.NODE_ENV === 'production' 
-          ? `https://prescripto-backend-2lb9.onrender.com/api/v1`
+        url: process.env.NODE_ENV === 'production'
+          ? `https://medconnect-backend-ig4x.onrender.com/api/v1`
           : 'http://localhost:3300/api/v1',
-        description: process.env.NODE_ENV === 'production' 
+        description: process.env.NODE_ENV === 'production'
           ? 'Production server (Render)'
           : 'Development server',
-      },
-      {
-        url: 'https://prescripto-backend-2lb9.onrender.com/api/v1',
-        description: 'Production server (Render)',
       },
     ],
     tags: [
