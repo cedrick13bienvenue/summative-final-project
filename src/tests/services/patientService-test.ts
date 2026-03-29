@@ -393,7 +393,10 @@ describe('PatientService', () => {
 
       // Mock QRCodeService
       const { QRCodeService } = require('../../services/qrCodeService');
-      QRCodeService.generateQRCode.mockResolvedValue({ qrHash: 'QR-HASH-001' });
+      QRCodeService.generateQRCode.mockResolvedValue({ qrHash: 'QR-HASH-001', qrCodeImage: 'data:image/png;base64,abc', expiresAt: new Date() });
+
+      // Mock final Prescription.findByPk retrieval
+      MockPrescription.findByPk.mockResolvedValue(mockPrescription as any);
 
       const result = await PatientService.createPrescription(mockPrescriptionData);
 
