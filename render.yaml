@@ -1,9 +1,15 @@
+databases:
+  - name: medconnect-db
+    databaseName: prescripto_db
+    user: prescripto_user
+    plan: free
+
 services:
   - type: web
-    name: prescripto-backend
+    name: medconnect-backend
     env: node
-    plan: starter
-    buildCommand: npm install && npm run build
+    plan: free
+    buildCommand: npm install && npm run build && npx sequelize-cli db:migrate && npx sequelize-cli db:seed --seed 01-admin-user.js
     startCommand: npm start
     healthCheckPath: /health
     envVars:
@@ -12,4 +18,58 @@ services:
       - key: PORT
         value: 10000
       - key: DOCS_ONLY
-        value: "true"
+        value: "false"
+      - key: DB_HOST
+        fromDatabase:
+          name: medconnect-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: medconnect-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: medconnect-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: medconnect-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: medconnect-db
+          property: password
+      - key: DATABASE_URL
+        fromDatabase:
+          name: medconnect-db
+          property: connectionString
+      - key: DB_DIALECT
+        value: postgres
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 24h
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      - key: QR_EXPIRY_HOURS
+        value: "72"
+      - key: QR_ENCRYPTION_KEY
+        generateValue: true
+      - key: BCRYPT_ROUNDS
+        value: "12"
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_SECURE
+        value: "false"
+      - key: SMTP_USER
+        value: medconnect250@gmail.com
+      - key: SMTP_PASS
+        sync: false
+      - key: FRONTEND_URL
+        value: https://medconnect-backend.onrender.com
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "900000"
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: "100"
