@@ -153,7 +153,7 @@ const mockBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
 describe('User beforeCreate/beforeUpdate hooks', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockBcrypt.hash.mockResolvedValue('hashed-password' as any);
+    mockBcrypt.hash.mockResolvedValue('hashed-password' as never);
   });
 
   it('should hash password in beforeCreate when password is provided', async () => {

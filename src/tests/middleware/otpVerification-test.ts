@@ -1,5 +1,7 @@
 import { requireOTPVerification, generateOTPForPatient } from '../../middleware/otpVerification';
-import { UserRole } from '../../models';
+
+// Mock the entire models module including Patient (used via dynamic import inside middleware)
+const mockPatientFindByPk = jest.fn();
 
 jest.mock('../../models', () => ({
   UserRole: {
@@ -8,6 +10,7 @@ jest.mock('../../models', () => ({
     PHARMACIST: 'pharmacist',
     ADMIN: 'admin',
   },
+  Patient: { findByPk: jest.fn() },
 }));
 
 jest.mock('../../services/otpService', () => ({
@@ -17,28 +20,11 @@ jest.mock('../../services/otpService', () => ({
   },
 }));
 
-jest.mock('../../models', () => ({
-  UserRole: {
-    PATIENT: 'patient',
-    DOCTOR: 'doctor',
-    PHARMACIST: 'pharmacist',
-    ADMIN: 'admin',
-  },
-}));
-
-// Mock dynamic import of Patient
-const mockPatientFindByPk = jest.fn();
-jest.mock('../../models/Patient', () => ({}), { virtual: true });
-
-// We need to intercept dynamic import('../models')
-const mockPatient = { findByPk: jest.fn() };
-jest.doMock('../../models', () => ({
-  UserRole: { PATIENT: 'patient', DOCTOR: 'doctor', PHARMACIST: 'pharmacist', ADMIN: 'admin' },
-  Patient: mockPatient,
-}));
-
 import { OTPService } from '../../services/otpService';
+import { Patient } from '../../models';
+
 const MockOTPService = OTPService as jest.Mocked<typeof OTPService>;
+const MockPatient = Patient as jest.Mocked<typeof Patient>;
 
 const mockReq = (overrides: any = {}) => ({
   headers: {},
@@ -79,7 +65,7 @@ describe('requireOTPVerification', () => {
   });
 
   it('should return 404 if patient is not found', async () => {
-    mockPatient.findByPk.mockResolvedValue(null);
+    MockPatient.findByPk.mockResolvedValue(null);
     const req = mockReq({
       params: { patientId: 'p-1' },
       query: {},
@@ -91,7 +77,7 @@ describe('requireOTPVerification', () => {
   });
 
   it('should return 403 if patient belongs to another user', async () => {
-    mockPatient.findByPk.mockResolvedValue({ userId: 'other-user' });
+    MockPatient.findByPk.mockResolvedValue({ userId: 'other-user' } as any);
     const req = mockReq({
       params: { patientId: 'p-1' },
       query: {},
@@ -103,7 +89,7 @@ describe('requireOTPVerification', () => {
   });
 
   it('should return 400 if no OTP code is provided', async () => {
-    mockPatient.findByPk.mockResolvedValue({ userId: 'u-1' });
+    MockPatient.findByPk.mockResolvedValue({ userId: 'u-1' } as any);
     const req = mockReq({
       params: { patientId: 'p-1' },
       query: {},
@@ -115,8 +101,8 @@ describe('requireOTPVerification', () => {
   });
 
   it('should return 400 if OTP code is invalid', async () => {
-    mockPatient.findByPk.mockResolvedValue({ userId: 'u-1' });
-    MockOTPService.verifyOTP.mockResolvedValue({ isValid: false, message: 'Invalid OTP' });
+    MockPatient.findByPk.mockResolvedValue({ userId: 'u-1' } as any);
+    MockOTPService.verifyOTP.mockResolvedValue({ isValid: false, message: 'Invalid OTP' } as any);
     const req = mockReq({
       params: { patientId: 'p-1' },
       query: { otpCode: '123456' },
@@ -128,8 +114,8 @@ describe('requireOTPVerification', () => {
   });
 
   it('should call next if OTP is valid', async () => {
-    mockPatient.findByPk.mockResolvedValue({ userId: 'u-1' });
-    MockOTPService.verifyOTP.mockResolvedValue({ isValid: true, message: 'OK' });
+    MockPatient.findByPk.mockResolvedValue({ userId: 'u-1' } as any);
+    MockOTPService.verifyOTP.mockResolvedValue({ isValid: true, message: 'OK' } as any);
     const req = mockReq({
       params: { patientId: 'p-1' },
       query: { otpCode: '123456' },
@@ -141,7 +127,7 @@ describe('requireOTPVerification', () => {
   });
 
   it('should return 500 on unexpected error', async () => {
-    mockPatient.findByPk.mockRejectedValue(new Error('DB error'));
+    MockPatient.findByPk.mockRejectedValue(new Error('DB error'));
     const req = mockReq({
       params: { patientId: 'p-1' },
       query: { otpCode: '123456' },
@@ -172,7 +158,7 @@ describe('generateOTPForPatient', () => {
   });
 
   it('should return 404 if patient is not found', async () => {
-    mockPatient.findByPk.mockResolvedValue(null);
+    MockPatient.findByPk.mockResolvedValue(null);
     const req = mockReq({
       params: { patientId: 'p-1' },
       user: { id: 'u-1', role: 'patient' },
@@ -183,7 +169,7 @@ describe('generateOTPForPatient', () => {
   });
 
   it('should return 403 if patient belongs to another user', async () => {
-    mockPatient.findByPk.mockResolvedValue({ userId: 'other-user' });
+    MockPatient.findByPk.mockResolvedValue({ userId: 'other-user' } as any);
     const req = mockReq({
       params: { patientId: 'p-1' },
       user: { id: 'u-1', role: 'patient' },
@@ -194,8 +180,8 @@ describe('generateOTPForPatient', () => {
   });
 
   it('should return 400 if OTP generation fails', async () => {
-    mockPatient.findByPk.mockResolvedValue({ userId: 'u-1' });
-    MockOTPService.generateAndSendOTP.mockResolvedValue({ success: false, message: 'Failed' });
+    MockPatient.findByPk.mockResolvedValue({ userId: 'u-1' } as any);
+    MockOTPService.generateAndSendOTP.mockResolvedValue({ success: false, message: 'Failed' } as any);
     const req = mockReq({
       params: { patientId: 'p-1' },
       user: { id: 'u-1', role: 'patient' },
@@ -206,14 +192,14 @@ describe('generateOTPForPatient', () => {
   });
 
   it('should return 200 and OTP data on success', async () => {
-    mockPatient.findByPk.mockResolvedValue({ userId: 'u-1' });
+    MockPatient.findByPk.mockResolvedValue({ userId: 'u-1' } as any);
     const expiresAt = new Date();
     MockOTPService.generateAndSendOTP.mockResolvedValue({
       success: true,
       message: 'OTP sent',
       otpId: 'otp-1',
       expiresAt,
-    });
+    } as any);
     const req = mockReq({
       params: { patientId: 'p-1' },
       user: { id: 'u-1', role: 'patient' },
@@ -221,13 +207,11 @@ describe('generateOTPForPatient', () => {
     const res = mockRes();
     await generateOTPForPatient(req, res, mockNext);
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({ success: true })
-    );
+    expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ success: true }));
   });
 
   it('should return 500 on unexpected error', async () => {
-    mockPatient.findByPk.mockRejectedValue(new Error('Unexpected'));
+    MockPatient.findByPk.mockRejectedValue(new Error('Unexpected'));
     const req = mockReq({
       params: { patientId: 'p-1' },
       user: { id: 'u-1', role: 'patient' },
