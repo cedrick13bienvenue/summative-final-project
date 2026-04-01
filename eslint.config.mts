@@ -117,14 +117,14 @@ export default [
       '@typescript-eslint/no-array-constructor': 'error',
       '@typescript-eslint/no-empty-interface': 'warn',
       '@typescript-eslint/no-extra-non-null-assertion': 'error',
-      '@typescript-eslint/no-extra-semi': 'error',
+
       '@typescript-eslint/no-misused-new': 'error',
       '@typescript-eslint/no-namespace': 'error',
       '@typescript-eslint/no-this-alias': 'error',
       '@typescript-eslint/prefer-as-const': 'error',
       '@typescript-eslint/prefer-namespace-keyword': 'error',
       '@typescript-eslint/triple-slash-reference': 'error',
-      '@typescript-eslint/type-annotation-spacing': 'error',
+
       '@typescript-eslint/unified-signatures': 'error',
     },
   },
@@ -138,6 +138,7 @@ export default [
       '*.config.mjs',
       '*.config.ts',
       '*.config.mts',
+      'clear-database-data.ts',
     ],
   },
 ];
