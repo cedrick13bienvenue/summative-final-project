@@ -25,11 +25,15 @@ A Digital Prescription & Patient Records System built with **Express.js**, **Typ
 
 > Hosted on Render free tier — the first request after a period of inactivity may take ~30 seconds to wake up.
 
-**Default admin credentials (seeded on first deploy):**
-```
-Email:    admin@medconnect.com
-Password: admin123!@#
-```
+**Demo credentials — try the full workflow without setting anything up:**
+
+| Role | Email | Password | What you can do |
+|------|-------|----------|-----------------|
+| Admin | admin@medconnect.com | admin123!@# | Register doctors & pharmacists, manage users |
+| Doctor | test@hospital.com | doctor123!@# | Create prescriptions, register patients |
+| Pharmacist | test@pharmacy.com | pharma123!@# | Scan QR codes, validate & dispense prescriptions |
+
+> **Patients** don't register themselves — a doctor creates their account during registration. Once created, the patient receives their login credentials by email and can log in to view their full prescription history, past medical visits, and dispensing records.
 
 ---
 
