@@ -4,7 +4,7 @@
   "description": "Digital Prescription & Patient Records System Backend",
   "main": "dist/server.js",
   "scripts": {
-    "start": "node dist/scripts/startup.js",
+    "start": "node dist/server.js",
     "deploy": "npm run build && npm run db:deploy && npm start",
     "dev": "nodemon src/server.ts",
     "build": "tsc --project tsconfig.prod.json && npm run copy-swagger-files && npm run swagger:generate",
