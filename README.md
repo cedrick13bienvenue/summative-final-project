@@ -533,7 +533,7 @@ The test suite has **789 tests across 58 test files** and enforces a minimum of 
 | Metric | Result |
 |---|---|
 | Statements | 98.71% |
-| Branches | 90.22% |
+| Branches | 89.8% |
 | Functions | 97.65% |
 | Lines | 98.79% |
 
