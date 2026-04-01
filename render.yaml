@@ -46,7 +46,7 @@ services:
       - key: DB_DIALECT
         value: postgres
       - key: JWT_SECRET
-        generateValue: true
+        sync: false
       - key: JWT_EXPIRES_IN
         value: 24h
       - key: JWT_REFRESH_EXPIRES_IN
