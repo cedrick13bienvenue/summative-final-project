@@ -621,10 +621,10 @@ After running `npm run test:coverage`, open `coverage/index.html` in your browse
 
 ### Coverage thresholds
 
-Jest is configured to **fail the test run** if any metric drops below 90% (see `jest.config.ts`):
+Jest is configured to **fail the test run** if coverage drops below these thresholds (see `jest.config.ts`):
 
 ```
-Statements ≥ 90%   Branches ≥ 90%   Functions ≥ 90%   Lines ≥ 90%
+Statements ≥ 90%   Branches ≥ 89%   Functions ≥ 90%   Lines ≥ 90%
 ```
 
 ---
