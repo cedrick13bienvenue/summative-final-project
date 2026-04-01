@@ -526,7 +526,7 @@ PatientService.createPrescription()
 
 ## Testing
 
-The test suite has **789 tests across 58 test files** and enforces a minimum of **90% coverage** on every metric.
+The test suite has **789 tests across 58 test files** and enforces a minimum of **90% coverage** on statements, functions, and lines, and **89% on branches**.
 
 ### Coverage results
 
