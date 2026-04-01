@@ -1,7 +1,7 @@
 [![CI](https://github.com/cedrick13bienvenue/summative-final-project/actions/workflows/test.yml/badge.svg)](https://github.com/cedrick13bienvenue/summative-final-project/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/cedrick13bienvenue/summative-final-project/badge.svg)](https://codecov.io/gh/cedrick13bienvenue/summative-final-project)
 [![Last Commit](https://img.shields.io/github/last-commit/cedrick13bienvenue/summative-final-project)](https://github.com/cedrick13bienvenue/summative-final-project/commits/main)
-[![Node](https://img.shields.io/github/package-json/engines/node/cedrick13bienvenue/summative-final-project?label=node&logo=node.js&logoColor=white&color=brightgreen)](https://nodejs.org)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen?logo=node.js&logoColor=white)](https://nodejs.org)
 [![TypeScript](https://img.shields.io/github/package-json/dependency-version/cedrick13bienvenue/summative-final-project/dev/typescript?label=TypeScript&logo=typescript&logoColor=white&color=blue)](https://www.typescriptlang.org)
 [![Express](https://img.shields.io/github/package-json/dependency-version/cedrick13bienvenue/summative-final-project/express?label=Express&logo=express&logoColor=white&color=black)](https://expressjs.com)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?logo=postgresql&logoColor=white)](https://www.postgresql.org)
