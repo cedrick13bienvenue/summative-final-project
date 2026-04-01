@@ -1,13 +1,50 @@
 name: Tests
-on: [push, pull_request]
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
 jobs:
   test:
     runs-on: ubuntu-latest
+
+    env:
+      NODE_ENV: test
+      PORT: 3000
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: medconnect_test_db
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      JWT_SECRET: ci-test-jwt-secret-key
+      JWT_EXPIRES_IN: 24h
+      QR_ENCRYPTION_KEY: ci-test-qr-encryption-key-32chars
+      SMTP_HOST: smtp.example.com
+      SMTP_PORT: 587
+      SMTP_SECURE: 'false'
+      SMTP_USER: test@example.com
+      SMTP_PASS: test-password
+      FRONTEND_URL: http://localhost:3000
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          node-version: '18'
-      - run: npm ci
-      - run: npm run test:ci
-      - uses: codecov/codecov-action@v3
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm run test:ci
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
