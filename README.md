@@ -1,12 +1,10 @@
 # MedConnect Backend
 
-[![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com/cedrick13bienvenue/summative-final-project)
-[![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen)](https://github.com/cedrick13bienvenue/summative-final-project)
-[![Node](https://img.shields.io/badge/node-%3E%3D18-blue)](https://nodejs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+A Digital Prescription & Patient Records System built with **Express.js**, **TypeScript**, and **PostgreSQL**. MedConnect enables doctors to create digital prescriptions with encrypted QR codes, pharmacists to scan and dispense them, and patients to receive everything by email — all through a secure, role-based REST API.
 
-## Live Deployment
+---
+
+## Live Demo
 
 | Resource | URL |
 |----------|-----|
@@ -15,356 +13,443 @@
 | QR Scanner | https://medconnect-backend-ig4x.onrender.com/qr-scanner.html |
 | Health Check | https://medconnect-backend-ig4x.onrender.com/health |
 
-> **Note:** Hosted on Render free tier — first request after inactivity may take ~30 seconds to wake up.
+> Hosted on Render free tier — the first request after a period of inactivity may take ~30 seconds to wake up.
 
-### Default Admin Credentials
+**Default admin credentials (seeded on first deploy):**
 ```
 Email:    admin@medconnect.com
 Password: admin123!@#
 ```
 
-A comprehensive Digital Prescription & Patient Records System built with Express.js, TypeScript, and PostgreSQL. This system enables healthcare providers to create digital prescriptions with QR codes, manage patient records, and facilitate seamless pharmacy operations.
+---
 
-## Features
+## Table of Contents
 
-### Authentication & Authorization
+1. [How It Works](#how-it-works)
+2. [System Architecture](#system-architecture)
+3. [Tech Stack](#tech-stack)
+4. [Local Setup](#local-setup)
+5. [Project Structure](#project-structure)
+6. [API Reference](#api-reference)
+7. [Authentication & Security](#authentication--security)
+8. [Rate Limiting](#rate-limiting)
+9. [Email & Event System](#email--event-system)
+10. [Testing](#testing)
+11. [Available Scripts](#available-scripts)
 
-- **Multi-role system**: Doctors, Patients, Pharmacists, and Admins
-- **JWT-based authentication** with secure token management
-- **OTP verification** for medical history access and password reset
-- **Role-based access control** with middleware protection
+---
 
-### Doctor Features
+## How It Works
 
-- **Patient management**: Create and manage patient profiles
-- **Digital prescriptions**: Create prescriptions with detailed medication information
-- **Medical visits**: Track patient visits and medical history
-- **QR code generation**: Automatic QR code creation for prescriptions
-- **Email notifications**: Send prescription details to patients
+MedConnect follows a strict clinical workflow across three roles:
 
-### Patient Features
+### 1. Doctor creates a prescription
 
-- **Profile management**: Complete patient profile with medical information
-- **Prescription access**: View and manage prescriptions via QR codes
-- **Reference number lookup**: Alternative access method for pharmacies without QR scanners
-- **Email notifications**: Receive prescription details via email
+1. Doctor logs in and searches for a patient by name or national ID.
+2. Opens or creates a medical visit for that patient.
+3. Creates a prescription with one or more medications (name, dosage, frequency, quantity).
+4. The system automatically:
+   - Generates a unique prescription number (`RX-YYYYMMDD-XXXX`).
+   - Encrypts the prescription data and creates a QR code linked to it.
+   - Fires a background event that queues an email to the patient containing the QR code image and a reference number as fallback.
+5. The doctor's API response is instant — email delivery happens asynchronously in the background.
 
-### Pharmacy Features
+### 2. Patient visits the pharmacy
 
-- **QR code scanning**: Scan patient QR codes to retrieve prescriptions
-- **Reference number lookup**: Look up prescriptions using patient reference numbers
-- **Prescription validation**: Review and approve prescriptions
-- **Dispensing management**: Track medication dispensing with inventory details
-- **Prescription history**: View dispensing history and logs
+The patient either:
+- Shows the QR code on their phone/printout, or
+- Gives the pharmacist their 16-digit national ID (Rwanda Indangamuntu) as a reference lookup fallback — no QR scanner needed.
 
-### Email System
+### 3. Pharmacist dispenses
 
-- **Prescription emails**: Automated emails with QR codes and reference numbers
-- **Welcome emails**: New user onboarding
-- **OTP emails**: Secure verification codes
-- **Professional templates**: HTML and text email formats
-- **Event-driven architecture**: Background email processing with retry mechanisms
+1. **Scan** — Pharmacist scans the QR code (or looks up by reference number). The system decrypts and displays the prescription details. Status changes to `SCANNED`.
+2. **Validate** — Pharmacist reviews and confirms the prescription is legitimate. Status changes to `VALIDATED`.
+3. **Dispense** — Pharmacist enters dispensing details per item (quantity dispensed, unit price, batch number, expiry date). Status changes to `DISPENSED` then `FULFILLED`.
+4. At any step the pharmacist can **Reject** the prescription with a reason.
 
-### QR Code System
+Every action (SCAN, VALIDATED, DISPENSED, FULFILLED, REJECTED) is recorded in `PharmacyLog` with full financial and insurance details.
 
-- **Secure QR codes**: Encrypted prescription data
-- **Expiration management**: Time-limited QR codes for security
-- **Usage tracking**: Monitor QR code scans and usage
-- **Image generation**: Base64 encoded QR code images
+### Prescription Status Flow
 
-### Event-Driven Architecture
+```
+PENDING ──► SCANNED ──► VALIDATED ──► DISPENSED ──► FULFILLED
+   │            │            │              │
+   └──► CANCELLED └──► REJECTED ◄────────────┘
+```
 
-- **Background processing**: Non-blocking email sending
-- **Job queue system**: Reliable email delivery with retry logic
-- **Event monitoring**: Real-time queue status and health checks
-- **Graceful degradation**: Fallback to direct email sending
+---
 
-## Quick Start
+## System Architecture
+
+```
+Client (Postman / Browser / Mobile)
+        │
+        │ HTTPS + JWT
+        ▼
+┌─────────────────────────────────────────────────┐
+│                  Express.js API                  │
+│                                                  │
+│  Routes ──► Middleware ──► Controllers           │
+│                │                │                │
+│          ┌─────┴─────┐    ┌─────┴──────┐        │
+│          │ Auth (JWT) │    │  Services  │        │
+│          │ Role check │    │  (logic)   │        │
+│          │ Joi valid. │    └─────┬──────┘        │
+│          │ Rate limit │          │                │
+│          └───────────┘    ┌─────┴──────┐        │
+│                           │   Models   │        │
+│                           │ (Sequelize)│        │
+│                           └─────┬──────┘        │
+└─────────────────────────────────┼───────────────┘
+                                  │ SQL
+                                  ▼
+                          ┌───────────────┐
+                          │  PostgreSQL   │
+                          └───────────────┘
+
+Background (non-blocking):
+EventService ──► EmailService ──► SMTP Server
+  (queue)         (Nodemailer)
+```
+
+Every request goes through four middleware layers before reaching business logic:
+1. **JWT authentication** — verifies the token and attaches the user to `req.user`
+2. **Role-based access control** — checks the user's role against what the route requires
+3. **Joi validation** — rejects malformed request bodies before any DB call
+4. **Rate limiting** — enforces per-IP and per-user request caps
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Runtime | Node.js 18+ |
+| Language | TypeScript 5.2 |
+| Framework | Express.js 4 |
+| Database | PostgreSQL 12+ |
+| ORM | Sequelize 6 |
+| Auth | JSON Web Tokens (jsonwebtoken) |
+| Password hashing | bcryptjs |
+| Validation | Joi 18 |
+| QR codes | qrcode |
+| Email | Nodemailer |
+| API docs | Swagger / OpenAPI (swagger-jsdoc + swagger-ui-express) |
+| Rate limiting | express-rate-limit |
+| Testing | Jest 29 + ts-jest |
+
+---
+
+## Local Setup
 
 ### Prerequisites
 
-- Node.js 18+
-- PostgreSQL 12+
-- npm
+- **Node.js 18+** — [download](https://nodejs.org)
+- **PostgreSQL 12+** — [download](https://www.postgresql.org/download/)
+- **npm** (comes with Node.js)
 
-### 1. Clone and Install
+### Step 1 — Clone and install
 
 ```bash
 git clone <repository-url>
-cd prescripto
+cd summative-final-project
 npm install
 ```
 
-### 2. Environment Setup
+### Step 2 — Create the database
+
+Open a PostgreSQL shell (or pgAdmin) and create the database:
+
+```sql
+CREATE DATABASE medconnect_db;
+```
+
+### Step 3 — Configure environment variables
+
+Copy the example env file and fill in your values:
 
 ```bash
 cp env.example .env
-# Edit .env with your configuration
 ```
 
-**Required Environment Variables:**
+Open `.env` and edit:
 
-````env
-# Database
+```env
+# ── Database ──────────────────────────────────────
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=medconnect_db
 DB_USER=postgres
-DB_PASSWORD=your_password
+DB_PASSWORD=your_postgres_password
 
-# JWT
+# ── Server ────────────────────────────────────────
+PORT=3000
+NODE_ENV=development
+
+# ── JWT ───────────────────────────────────────────
+# Use a long random string — generate one with:
+#   node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 JWT_SECRET=your_super_secret_jwt_key_here
 JWT_EXPIRES_IN=24h
 
-# QR Code Encryption
+# ── QR Code Encryption ────────────────────────────
+# Another long random string used to AES-256 encrypt QR data
 QR_ENCRYPTION_KEY=your_qr_encryption_key_here
 
-# Email (Gmail example)
+# ── Email (Gmail example) ─────────────────────────
+# For Gmail: enable 2FA and create an App Password at
+#   https://myaccount.google.com/apppasswords
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your_email@gmail.com
-SMTP_PASS=your_app_password
+SMTP_PASS=your_gmail_app_password
+EMAIL_FROM=your_email@gmail.com
 
+```
 
-### 3. Database Setup
+> **No email account?** The app still works without SMTP configured — prescriptions are created and QR codes generated; email jobs will fail silently in the background queue with no effect on the API responses.
+
+### Step 4 — Run database migrations and seed
 
 ```bash
-# Create database
+# Create all tables
 npm run db:migrate
 
-# Seed with admin user
+# Seed the admin user (admin@medconnect.com / admin123!@#)
 npm run db:seed
-````
+```
 
-### 4. Start Development Server
+### Step 5 — Start the development server
 
 ```bash
 npm run dev
 ```
 
-The server will start on `http://localhost:3000`
+The server starts at `http://localhost:3000`.
+
+Visit `http://localhost:3000/api/v1/docs` for the interactive Swagger UI where you can try every endpoint directly in the browser.
+
+### Verify it's running
+
+```bash
+curl http://localhost:3000/health
+# → { "status": "ok", "timestamp": "..." }
+```
+
+---
 
 ## Project Structure
 
 ```
 src/
-├── controllers/          # Route controllers
+├── controllers/          # HTTP layer — parse request, call service, send response
 │   ├── authController.ts
 │   ├── doctorController.ts
 │   ├── patientController.ts
 │   ├── pharmacistController.ts
 │   └── pharmacyController.ts
-├── database/            # Database configuration and migrations
-│   ├── config/
-│   ├── migrations/
-│   └── seeders/
-├── middleware/          # Custom middleware
-│   ├── auth.ts
-│   ├── otpVerification.ts
-│   └── validation.ts
-├── models/              # Sequelize models
-│   ├── Doctor.ts
-│   ├── Patient.ts
-│   ├── Prescription.ts
-│   ├── QRCode.ts
-│   └── ...
-├── routes/              # API routes
+│
+├── services/             # Business logic — all database interaction lives here
+│   ├── authService.ts        # register, login, logout, refresh, changePassword, resetPassword
+│   ├── patientService.ts     # patient CRUD, medical visits, prescriptions
+│   ├── doctorService.ts      # doctor CRUD, verification
+│   ├── pharmacistService.ts  # pharmacist CRUD, verify/unverify
+│   ├── pharmacyService.ts    # scan, lookup, validate, dispense, reject, history
+│   ├── qrCodeService.ts      # generate, encrypt, verify, mark as used
+│   ├── emailService.ts       # HTML email templates and SMTP delivery
+│   ├── eventService.ts       # in-memory job queue, retry logic, background processing
+│   └── otpService.ts         # OTP generation, verification (medical history & password reset)
+│
+├── models/               # Sequelize ORM models (11 tables)
+│   ├── User.ts               # email, passwordHash, role, nationalId, isActive
+│   ├── Patient.ts            # dateOfBirth, gender, insurance, allergies, conditions
+│   ├── Doctor.ts             # licenseNumber, specialization, hospitalName, isVerified
+│   ├── Pharmacist.ts         # licenseNumber, pharmacyName, pharmacyAddress, isVerified
+│   ├── MedicalVisit.ts       # visitDate, visitType, chiefComplaint, diagnosis, notes
+│   ├── Prescription.ts       # prescriptionNumber, status, diagnosis, QR hash
+│   ├── PrescriptionItem.ts   # medicine details + dispensing fields
+│   ├── QRCode.ts             # qrHash, encryptedData, expiresAt, scanCount, isUsed
+│   ├── PharmacyLog.ts        # every pharmacy action with financial/insurance data
+│   ├── TokenBlacklist.ts     # invalidated JWT tokens for secure logout
+│   ├── OTPVerification.ts    # OTP codes for medical history access and password reset
+│   └── index.ts              # exports all models with associations set up
+│
+├── middleware/           # Express middleware (applied before controllers)
+│   ├── auth.ts               # authenticateToken, requireRole, requireVerified
+│   ├── otpVerification.ts    # requireOTPVerification (for medical history)
+│   ├── rateLimiter.ts        # role-based and endpoint-specific rate limits
+│   └── validation.ts         # validate(), validateBody(), validateParams(), etc.
+│
+├── routes/               # Route definitions (wires middleware + controllers)
 │   ├── auth.ts
 │   ├── doctors.ts
 │   ├── patients.ts
+│   ├── pharmacists.ts
 │   ├── pharmacy.ts
 │   ├── qrCodes.ts
-│   └── events.ts
-├── services/            # Business logic
-│   ├── authService.ts
-│   ├── emailService.ts
-│   ├── eventService.ts
-│   ├── pharmacyService.ts
-│   └── qrCodeService.ts
-├── swagger/             # API documentation
-│   ├── paths/
-│   └── schemas/
-├── types/               # TypeScript type definitions
-├── utils/               # Utility functions
-└── validation/          # Input validation schemas
+│   ├── events.ts
+│   └── index.ts
+│
+├── validation/
+│   └── schemas.ts        # All Joi schemas (register, login, prescription, dispensing, etc.)
+│
+├── types/                # TypeScript interfaces and type definitions
+│   ├── auth.ts
+│   ├── patient.ts
+│   ├── doctor.ts
+│   ├── pharmacist.ts
+│   └── common.ts
+│
+├── utils/
+│   └── tokenCleanup.ts   # Scheduled cleanup of expired JWT blacklist entries
+│
+├── swagger/              # OpenAPI spec files (auto-generated)
+├── scripts/              # One-off scripts (migrate, seed, swagger gen)
+└── server.ts             # App entry point
 ```
 
-## API Documentation
+---
 
-### Base URL
+## API Reference
 
-```
-http://localhost:3000/api/v1
-```
+Base URL: `http://localhost:3000/api/v1`
 
-### Authentication Endpoints
+For the full interactive reference with request/response schemas, visit the Swagger UI at `/api/v1/docs`.
 
-- `POST /auth/register` - User registration
-- `POST /auth/login` - User login
-- `POST /auth/logout` - User logout
-- `POST /auth/refresh` - Refresh JWT token
-- `POST /auth/forgot-password` - Request password reset
-- `POST /auth/reset-password` - Reset password with OTP
+### Authentication
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| POST | `/auth/login` | None | Login and receive JWT |
+| POST | `/auth/logout` | JWT | Blacklist current token |
+| POST | `/auth/refresh` | JWT | Get a new token |
+| POST | `/auth/change-password` | JWT | Change own password |
+| POST | `/auth/forgot-password` | None | Send password reset OTP by email |
+| POST | `/auth/reset-password` | None | Reset password using OTP |
 
 ### Doctor Endpoints
 
-- `GET /doctors/patients` - Get all patients (with pagination)
-- `POST /doctors/patients` - Create new patient
-- `GET /doctors/patients/:id` - Get patient details
-- `PUT /doctors/patients/:id` - Update patient
-- `POST /doctors/prescriptions` - Create prescription
-- `GET /doctors/prescriptions` - Get doctor's prescriptions
-- `GET /doctors/medical-visits` - Get medical visits
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/doctors/register` | Register a doctor (admin only) |
+| GET | `/doctors` | List all doctors (admin only) |
+| GET | `/doctors/:id` | Get doctor by ID |
+| PUT | `/doctors/:id` | Update doctor profile |
+| DELETE | `/doctors/:id` | Delete doctor (admin only) |
+| GET | `/doctors/patients` | List all patients |
+| POST | `/doctors/patients` | Create a patient |
+| GET | `/doctors/patients/:id` | Get patient details |
+| PUT | `/doctors/patients/:id` | Update patient |
+| GET | `/doctors/patients/search` | Search patients by name |
+| GET | `/doctors/patients/lookup/:nationalId` | Lookup patient by national ID |
+| POST | `/doctors/prescriptions` | Create prescription + auto-generate QR |
+| GET | `/doctors/prescriptions` | List doctor's prescriptions |
+| GET | `/doctors/prescriptions/:id` | Get single prescription |
+| GET | `/doctors/medical-visits` | List all medical visits |
+| POST | `/doctors/medical-visits` | Create medical visit |
 
 ### Patient Endpoints
 
-- `GET /patients/profile` - Get patient profile
-- `PUT /patients/profile` - Update patient profile
-- `GET /patients/prescriptions` - Get patient's prescriptions
-- `GET /patients/medical-history` - Get medical history (OTP required)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/patients/profile` | Get own profile |
+| PUT | `/patients/profile` | Update own profile |
+| GET | `/patients/prescriptions` | Get own prescriptions |
+| GET | `/patients/medical-history` | View medical history (OTP required) |
+| POST | `/patients/generate-otp` | Request OTP for medical history access |
 
 ### Pharmacy Endpoints
 
-- `POST /pharmacy/scan` - Scan QR code
-- `POST /pharmacy/lookup` - Lookup by reference number
-- `POST /pharmacy/validate/:id` - Validate prescription
-- `POST /pharmacy/dispense/:id` - Dispense prescription
-- `POST /pharmacy/reject/:id` - Reject prescription
-- `GET /pharmacy/history` - Get dispensing history
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/pharmacy/scan` | Scan QR code → returns prescription details |
+| POST | `/pharmacy/lookup` | Lookup by patient national ID (reference fallback) |
+| POST | `/pharmacy/validate/:id` | Validate a scanned prescription |
+| POST | `/pharmacy/dispense/:id` | Dispense with item-level details |
+| POST | `/pharmacy/reject/:id` | Reject prescription with reason |
+| GET | `/pharmacy/history` | View own dispensing history |
+| GET | `/pharmacy/prescription/:id/logs` | View all logs for a prescription |
+| GET | `/pharmacy/qr-status/:hash` | Check QR code scan status |
 
-### QR Code Endpoints
+### Admin — Pharmacist Management
 
-- `POST /qr-codes/email/:id` - Send prescription email
-- `GET /qr-codes/:id` - Get QR code for prescription
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/pharmacists/register` | Register a pharmacist |
+| GET | `/pharmacists` | List all pharmacists |
+| GET | `/pharmacists/:id` | Get pharmacist by ID |
+| PUT | `/pharmacists/:id` | Update pharmacist |
+| DELETE | `/pharmacists/:id` | Delete pharmacist |
+| POST | `/pharmacists/:id/verify` | Verify pharmacist (allows dispensing) |
+| POST | `/pharmacists/:id/unverify` | Revoke verification |
 
-### Event Management Endpoints
+### QR Code & Event Endpoints
 
-- `GET /events/email-queue/status` - Get email queue status
-- `POST /events/email-queue/clear-completed` - Clear completed email jobs
-- `POST /events/test` - Test event emission
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/qr-codes` | List all QR codes (admin) |
+| GET | `/qr-codes/:prescriptionId` | Get QR code for prescription |
+| POST | `/qr-codes/email/:prescriptionId` | Manually trigger prescription email |
+| GET | `/events/email-queue/status` | Get email queue health and stats |
+| POST | `/events/email-queue/clear-completed` | Purge completed jobs |
+| POST | `/events/test` | Emit a test event |
 
-### Swagger Documentation
+---
 
-Visit `http://localhost:3000/api-docs` for interactive API documentation.
+## Authentication & Security
 
-## Available Scripts
+### JWT Flow
 
-### Development
+1. Client calls `POST /auth/login` → receives a JWT (default 24h expiry).
+2. Every subsequent request includes `Authorization: Bearer <token>`.
+3. `authenticateToken` middleware verifies the token and checks it is not blacklisted.
+4. `requireRole('doctor')` middleware checks `req.user.role` before sensitive routes.
+5. On logout, the token is stored in `TokenBlacklist` — all future requests with that token return 401.
 
-```bash
-npm run dev          # Start development server with hot reload
-npm run build        # Build TypeScript to JavaScript
-npm run build:dev    # Build for development
-```
+### Password Security
 
-### Database
+Passwords are hashed with **bcryptjs** (12 salt rounds) via a Sequelize `beforeCreate`/`beforeUpdate` hook on the `User` model. Plain text passwords are never stored.
 
-```bash
-npm run db:migrate           # Run database migrations
-npm run db:migrate:undo      # Undo last migration
-npm run db:seed              # Seed database with sample data
-npm run db:reset             # Drop, create, and migrate database
-npm run db:fresh             # Fresh database with seed data
-npm run db:clear             # Clear all data (development only)
-```
+### QR Code Encryption
 
-### Code Quality
+QR code data (prescription ID, patient details, medications) is encrypted with **AES-256-CBC** before being stored in the database and embedded in the QR image. Decryption happens server-side on every scan — the client never receives the raw key.
 
-```bash
-npm run lint                # Run ESLint
-npm run lint:fix            # Fix ESLint issues automatically
-```
+### OTP Verification
 
-### Utilities
+Sensitive operations (viewing medical history, resetting password) require a time-limited OTP sent to the patient's registered email. OTPs expire after a configurable window and are single-use.
 
-```bash
-npm run cleanup-tokens      # Clean up expired JWT tokens
-```
+---
 
-## Tech Stack
+## Rate Limiting
 
-### Backend
+All endpoints are protected by layered rate limits using `express-rate-limit`.
 
-- **Runtime**: Node.js 18+
-- **Language**: TypeScript
-- **Framework**: Express.js
-- **Database**: PostgreSQL
-- **ORM**: Sequelize
-- **Authentication**: JWT (jsonwebtoken)
-- **Email**: Nodemailer
-- **QR Codes**: qrcode
-- **Validation**: Joi
-- **Documentation**: Swagger/OpenAPI
-- **Events**: Node.js EventEmitter
-- **Rate Limiting**: express-rate-limit
+### Global limits (all endpoints)
 
-### Development Tools
+| Limit | Window |
+|---|---|
+| 100 requests per IP | 15 minutes |
 
-- **Linting**: ESLint
-- **Type Checking**: TypeScript
-- **Hot Reload**: Nodemon
-- **Database CLI**: Sequelize CLI
+### Authentication endpoints
 
-## Security Features
+| Endpoint | Limit | Window |
+|---|---|---|
+| Login | 5 attempts | 15 minutes |
+| Registration | 3 attempts | 1 hour |
+| Password reset | 3 attempts | 1 hour |
+| OTP requests | 3 attempts | 5 minutes |
 
-- **JWT Authentication** with configurable expiration
-- **Password hashing** using bcryptjs
-- **QR code encryption** for prescription data
-- **OTP verification** for sensitive operations
-- **Token blacklisting** for secure logout
-- **Input validation** with Joi schemas
-- **CORS protection** for cross-origin requests
-- **Role-based access control** throughout the system
-- **Comprehensive rate limiting** with role-based limits
-- **API abuse protection** with multiple rate limiting strategies
+### Role-based limits (authenticated users)
 
-## Rate Limiting System
+| Role | Limit | Window |
+|---|---|---|
+| Admin | 100 requests | 1 minute |
+| Doctor | 50 requests | 1 minute |
+| Pharmacist | 30 requests | 1 minute |
+| Patient | 20 requests | 1 minute |
+| Anonymous | 10 requests | 1 minute |
 
-The MedConnect API implements comprehensive rate limiting to prevent abuse and ensure fair usage across all endpoints.
-
-### Rate Limiting Strategies
-
-#### Global Rate Limiting
-
-- **Basic Protection**: 100 requests per 15 minutes per IP
-- **Applied to**: All API endpoints
-- **Purpose**: Prevent basic abuse and DDoS attacks
-
-#### Authentication Endpoints
-
-- **Login Attempts**: 5 attempts per 15 minutes per IP
-- **Password Reset**: 3 attempts per hour per IP
-- **Registration**: 3 attempts per hour per IP
-- **OTP Requests**: 3 requests per 5 minutes per IP
-
-#### Role-Based Rate Limiting
-
-- **Admin**: 100 requests per minute
-- **Doctor**: 50 requests per minute
-- **Pharmacist**: 30 requests per minute
-- **Patient**: 20 requests per minute
-- **Anonymous**: 10 requests per minute
-
-#### Endpoint-Specific Limits
-
-- **Prescription Creation**: 10 per minute per user
-- **QR Code Scanning**: 20 per minute per user
-- **Pharmacy Operations**: 15 per minute per user
-- **Email Sending**: 5 per minute per user
-- **Medical History Access**: 10 per minute per user
-- **Event Management**: 30 per minute per user
-
-### Rate Limit Headers
-
-All rate-limited endpoints return standard headers:
-
-- `X-RateLimit-Limit`: Maximum requests allowed
-- `X-RateLimit-Remaining`: Remaining requests in current window
-- `X-RateLimit-Reset`: Time when the rate limit resets
-
-### Rate Limit Response
-
-When rate limits are exceeded, the API returns:
+When a limit is exceeded the API returns:
 
 ```json
 {
@@ -377,287 +462,217 @@ When rate limits are exceeded, the API returns:
 }
 ```
 
-### Monitoring and Management
+---
 
-- **Real-time Monitoring**: Track rate limit usage across all endpoints
-- **Automatic Cleanup**: Completed rate limit windows are automatically cleared
-- **Configurable Limits**: Easy adjustment of limits based on usage patterns
-- **IP-based Tracking**: Separate limits for different IP addresses
-- **User-based Tracking**: Additional limits based on authenticated users
+## Email & Event System
 
-## Email Features
+Email delivery is **fully decoupled** from the request/response cycle using an in-memory job queue inside `EventService` (a singleton extending Node.js `EventEmitter`).
 
-### Prescription Emails
+### How it works
 
-- **QR Code inclusion**: Embedded QR code images
-- **Reference numbers**: Alternative access for pharmacies without QR scanners
-- **Professional templates**: HTML and text formats
-- **Expiration tracking**: Clear expiration dates
-- **Patient information**: Complete prescription details
-
-### Event-Driven Email System
-
-- **Background processing**: Non-blocking email sending
-- **Retry mechanism**: Automatic retry for failed emails
-- **Queue monitoring**: Real-time status and health checks
-- **Graceful degradation**: Fallback to direct email sending
-
-### Email Templates
-
-- Welcome emails for new users
-- Prescription notifications with QR codes
-- OTP verification emails
-- Password reset emails
-
-## Healthcare Workflow
-
-### 1. Doctor Creates Prescription
-
-1. Doctor logs in and selects patient
-2. Creates prescription with medication details
-3. System generates QR code and reference number
-4. Event system triggers background email processing
-5. Email sent to patient with QR code and reference number
-
-### 2. Patient Visits Pharmacy
-
-1. Patient shows QR code or provides reference number
-2. Pharmacist scans QR code or looks up by reference number
-3. System validates prescription and shows details
-4. Pharmacist can validate, dispense, or reject prescription
-
-### 3. Prescription Dispensing
-
-1. Pharmacist validates prescription
-2. Enters dispensing details (quantities, prices, batch numbers)
-3. System updates prescription status to "dispensed"
-4. Prescription is marked as fulfilled
-
-## Event-Driven Architecture
-
-### Event Types
-
-- **prescription.created**: Triggered when a new prescription is created
-- **user.registered**: Triggered when a new user registers
-- **prescription.dispensed**: Triggered when a prescription is dispensed
-
-### Background Processing
-
-- **Job Queue**: In-memory queue for email processing
-- **Retry Logic**: Automatic retry for failed emails (3 attempts)
-- **Monitoring**: Real-time queue status and health checks
-- **Fallback**: Direct email sending if event system fails
-
-### Queue Management
-
-```bash
-# Get queue status
-GET /api/v1/events/email-queue/status
-
-# Clear completed jobs
-POST /api/v1/events/email-queue/clear-completed
-
-# Test event emission
-POST /api/v1/events/test
+```
+POST /doctors/prescriptions
+        │
+        ▼
+PatientService.createPrescription()
+        │
+        ├── saves prescription + QR code to DB
+        │
+        ├── eventService.emit('prescription.created', data)
+        │       │
+        │       └── [background] queuePrescriptionEmail()
+        │               │
+        │               ├── fetches prescription with all relations
+        │               ├── builds EmailJob and pushes to queue
+        │               └── processEmailQueue() fires asynchronously
+        │                       │
+        │                       └── EmailService.sendPrescriptionEmail()
+        │                               │
+        │                               └── Nodemailer → SMTP
+        │
+        └── returns 201 to the doctor immediately
+            (email is in-flight, not blocking)
 ```
 
-## Deployment
+### Retry logic
 
-### Production Build
+- Each job has a `maxAttempts` of 3.
+- On failure, the job is re-queued with a 5-second delay.
+- After 3 failures, the job status becomes `failed`.
+- If the event system itself throws, `PatientService` falls back to calling `EmailService` directly as a last resort.
 
-```bash
-npm run build
-npm run db:migrate
-npm start
-```
+### Email types
 
-### Environment Variables for Production
+| Template | Trigger |
+|---|---|
+| Prescription notification | Prescription created — includes QR image and reference number |
+| OTP verification | Patient requests medical history access |
+| Password reset OTP | User requests password reset |
 
-Ensure all production environment variables are properly configured:
-
-- Database credentials
-- JWT secrets
-- Email SMTP settings
-- QR encryption keys
-- Frontend URL
-
-## API Response Examples
-
-### Successful Prescription Scan
-
-```json
-{
-  "success": true,
-  "message": "Prescription scanned successfully",
-  "data": {
-    "prescription": {
-      "id": "uuid",
-      "prescriptionNumber": "RX-20241201-1234",
-      "patientName": "John Doe",
-      "doctorName": "Dr. Smith",
-      "diagnosis": "Fever",
-      "status": "scanned",
-      "items": [
-        {
-          "medicineName": "Paracetamol",
-          "dosage": "500mg",
-          "frequency": "Twice daily",
-          "quantity": 20,
-          "instructions": "Take with food"
-        }
-      ],
-      "qrCode": {
-        "qrHash": "abc123def456",
-        "isUsed": false,
-        "scanCount": 1,
-        "expiresAt": "2024-12-08T10:30:00.000Z"
-      }
-    },
-    "isValid": true,
-    "canDispense": true
-  }
-}
-```
-
-### Email Queue Status
-
-```json
-{
-  "success": true,
-  "message": "Email queue status retrieved successfully",
-  "data": {
-    "totalJobs": 5,
-    "pendingJobs": 2,
-    "processingJobs": 1,
-    "completedJobs": 2,
-    "failedJobs": 0,
-    "isHealthy": true,
-    "lastUpdated": "2024-12-01T10:30:00.000Z"
-  }
-}
-```
+---
 
 ## Testing
 
-MedConnect maintains **90% test coverage** across branches, functions, lines, and statements, covering both unit tests and integration (controller) tests.
+The test suite has **789 tests across 58 test files** and enforces a minimum of **90% coverage** on every metric.
 
-### Test Structure
+### Coverage results
+
+| Metric | Result |
+|---|---|
+| Statements | 98.71% |
+| Branches | 90.22% |
+| Functions | 97.65% |
+| Lines | 98.79% |
+
+### How tests are structured
+
+Every test is a **unit test** — all external dependencies (PostgreSQL, SMTP, QR generation) are replaced with `jest.mock()` fakes. No real database or network connection is needed to run the suite.
 
 ```
 src/tests/
-├── models/
-│   ├── User-test.ts              # User model & bcrypt methods
-│   ├── Patient-test.ts           # Patient model
-│   ├── Doctor-test.ts            # Doctor model & verification
-│   ├── Pharmacist-test.ts        # Pharmacist model & verification
-│   ├── MedicalVisit-test.ts      # MedicalVisit model
-│   ├── Prescription-test.ts      # Prescription model & status enums
-│   ├── QRCode-test.ts            # QRCode model (isExpired, markAsUsed)
-│   ├── PharmacyLog-test.ts       # PharmacyLog model & actions
-│   ├── OTPVerification-test.ts   # OTP isValid, isExpired, generateOTPCode
-│   └── TokenBlacklist-test.ts    # Token blacklist static methods
-├── services/
-│   ├── authService-unit-test.ts  # AuthService: register, login, logout, changePassword
-│   ├── patientService-test.ts    # PatientService: registration, visits, prescriptions
-│   ├── doctorService-test.ts     # DoctorService: CRUD, verification
-│   ├── pharmacistService-test.ts # PharmacistService: CRUD, verify/unverify
-│   ├── pharmacyService-test.ts   # PharmacyService: scan, validate, dispense, reject
-│   └── qrCodeService-test.ts     # QRCodeService: generate, verify, stats
-├── controllers/
-│   ├── authController-test.ts    # AuthController integration tests
-│   ├── patientController-test.ts # PatientController integration tests
-│   ├── doctorController-test.ts  # DoctorController integration tests
-│   ├── pharmacistController-test.ts # PharmacistController integration tests
-│   └── pharmacyController-test.ts   # PharmacyController integration tests
-├── helpers/
-│   └── testDatabase.ts           # Test DB helpers
-└── setup.ts                      # Global test setup
+├── models/               # Tests for Sequelize model methods and hooks
+│   ├── User-test.ts
+│   ├── User-extended-test.ts
+│   ├── Patient-test.ts
+│   ├── Doctor-test.ts
+│   ├── Pharmacist-test.ts
+│   ├── MedicalVisit-test.ts
+│   ├── Prescription-test.ts
+│   ├── QRCode-test.ts
+│   ├── PharmacyLog-test.ts
+│   ├── OTPVerification-test.ts
+│   ├── OTPVerification-static-test.ts
+│   ├── TokenBlacklist-test.ts
+│   ├── TokenBlacklist-static-test.ts
+│   └── models-extended-test.ts
+│
+├── services/             # Tests for all business logic with mocked DB calls
+│   ├── authService-test.ts / authService-unit-test.ts / authService-extended-test.ts
+│   ├── patientService-test.ts / extended / extended2
+│   ├── doctorService-test.ts / extended
+│   ├── pharmacistService-test.ts / extended
+│   ├── pharmacyService-test.ts / extended / extended2 / extended3 / extended4
+│   ├── qrCodeService-test.ts / extended / extended2
+│   ├── emailService-test.ts
+│   ├── eventService-test.ts / extended / extended2
+│   └── otpService-test.ts / extended
+│
+├── controllers/          # Tests for HTTP layer (mocked services, real Express routing)
+│   ├── authController-test.ts / extended
+│   ├── patientController-test.ts / extended
+│   ├── doctorController-test.ts / extended / extended2
+│   ├── pharmacistController-test.ts / extended / extended2
+│   └── pharmacyController-test.ts / extended
+│
+├── middleware/           # Tests for auth, OTP, rate limiting, validation middleware
+│   ├── auth-test.ts
+│   ├── otpVerification-test.ts
+│   ├── rateLimiter-test.ts / extended2
+│   └── validation-test.ts
+│
+├── validation/
+│   └── schemas-test.ts   # Joi schema tests for all request shapes
+│
+├── types/
+│   └── types-test.ts
+│
+├── utils/
+│   └── tokenCleanup-test.ts
+│
+└── setup.ts              # Global: silences console output, loads test env vars
 ```
 
-### Running Tests
+### Running tests
 
-**Run all tests:**
 ```bash
+# Run all tests
 npm test
-```
 
-**Run with coverage report:**
-```bash
+# Run with coverage report
 npm run test:coverage
-```
 
-**Run a specific test file:**
-```bash
+# Watch mode (reruns on file save)
+npm run test:watch
+
+# Run a specific file
 npm test -- --testPathPattern="authService"
-```
 
-**Run only model tests:**
-```bash
-npm test -- --testPathPattern="models"
-```
-
-**Run only service tests:**
-```bash
+# Run a whole group
 npm test -- --testPathPattern="services"
-```
-
-**Run only controller tests:**
-```bash
 npm test -- --testPathPattern="controllers"
+npm test -- --testPathPattern="models"
+npm test -- --testPathPattern="middleware"
 ```
 
-**Watch mode (for development):**
+After running `npm run test:coverage`, open `coverage/index.html` in your browser for a line-by-line breakdown of exactly which code is covered.
+
+### Coverage thresholds
+
+Jest is configured to **fail the test run** if any metric drops below 90% (see `jest.config.ts`):
+
+```
+Statements ≥ 90%   Branches ≥ 90%   Functions ≥ 90%   Lines ≥ 90%
+```
+
+---
+
+## Available Scripts
+
+### Development
+
 ```bash
-npm test -- --watch
+npm run dev              # Start server with hot reload (nodemon)
+npm run build            # Compile TypeScript → dist/
+npm run build:dev        # Compile without prod optimizations
 ```
 
-### Coverage Report
+### Database
 
-After running `npm run test:coverage`, a full HTML report is generated at:
+```bash
+npm run db:migrate           # Apply all pending migrations
+npm run db:migrate:undo      # Roll back the last migration
+npm run db:seed              # Seed admin user
+npm run db:seed:undo         # Remove all seeded data
+npm run db:reset             # Drop → create → migrate (keeps seed data)
+npm run db:fresh             # Drop → create → migrate → seed (full reset)
 ```
-coverage/index.html
+
+### Testing
+
+```bash
+npm test                 # Run all tests
+npm run test:coverage    # Run tests + generate coverage report
+npm run test:watch       # Watch mode
+npm run test:ci          # CI mode (no watch, outputs coverage)
 ```
 
-Open it in your browser to see line-by-line coverage for every file.
+### Code quality
 
-### Coverage Thresholds
+```bash
+npm run lint             # Run ESLint
+npm run lint:fix         # Auto-fix ESLint issues
+```
 
-The project enforces the following minimum thresholds (configured in `jest.config.ts`):
+### Production
 
-| Metric     | Threshold |
-|------------|-----------|
-| Statements | 90%       |
-| Branches   | 90%       |
-| Functions  | 90%       |
-| Lines      | 90%       |
-
-The test suite will **fail** if any threshold is not met.
-
-### Test Strategy
-
-- **Unit tests (models & services):** All database calls are mocked with `jest.mock()`. Tests validate pure business logic in isolation.
-- **Integration tests (controllers):** Services are mocked. Tests validate HTTP response codes, JSON structure, authentication guards, and error handling.
-- **No test database required:** All tests run in-memory using mocks — no PostgreSQL connection needed.
+```bash
+npm run deploy           # build + db:deploy + start
+npm start                # Start compiled server (requires npm run build first)
+npm run cleanup-tokens   # Remove expired JWT blacklist entries from DB
+```
 
 ---
 
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Run the test suite
-6. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Team
-
-**MedConnect Team** - Building the future of digital healthcare
+2. Create a feature branch (`git checkout -b feature/my-feature`)
+3. Write your code and add tests for it
+4. Make sure all tests pass and coverage stays above 90% (`npm run test:coverage`)
+5. Submit a pull request
 
 ---
 
-For interactive API documentation, visit the live Swagger UI at https://medconnect-backend-ig4x.onrender.com/api/v1/docs
+## License
+
+MIT — see [LICENSE](LICENSE) for details.
