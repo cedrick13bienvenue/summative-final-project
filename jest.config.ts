@@ -29,7 +29,7 @@ const config: Config.InitialOptions = {
     },
   },
   testTimeout: 15000,
-  // Add global setup here instead
+  setupFilesAfterEnv: ['<rootDir>/src/tests/setup.ts'],
   globals: {
     "ts-jest": {
       tsconfig: "tsconfig.json",

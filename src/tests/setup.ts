@@ -13,7 +13,7 @@ beforeAll(() => {
     debug: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
-    error: originalConsole.error, // Keep error for debugging
+    error: jest.fn(),
   };
 });
 
