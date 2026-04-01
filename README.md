@@ -1,5 +1,11 @@
 # MedConnect Backend
 
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com/cedrick13bienvenue/summative-final-project)
+[![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen)](https://github.com/cedrick13bienvenue/summative-final-project)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-blue)](https://nodejs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 A Digital Prescription & Patient Records System built with **Express.js**, **TypeScript**, and **PostgreSQL**. MedConnect enables doctors to create digital prescriptions with encrypted QR codes, pharmacists to scan and dispense them, and patients to receive everything by email — all through a secure, role-based REST API.
 
 ---
