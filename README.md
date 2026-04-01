@@ -1,10 +1,14 @@
-# MedConnect Backend
+[![CI](https://github.com/cedrick13bienvenue/summative-final-project/actions/workflows/test.yml/badge.svg)](https://github.com/cedrick13bienvenue/summative-final-project/actions/workflows/test.yml)
+[![codecov](https://codecov.io/gh/cedrick13bienvenue/summative-final-project/badge.svg)](https://codecov.io/gh/cedrick13bienvenue/summative-final-project)
+[![Last Commit](https://img.shields.io/github/last-commit/cedrick13bienvenue/summative-final-project)](https://github.com/cedrick13bienvenue/summative-final-project/commits/main)
+[![Node](https://img.shields.io/github/package-json/engines/node/cedrick13bienvenue/summative-final-project?label=node&logo=node.js&logoColor=white&color=brightgreen)](https://nodejs.org)
+[![TypeScript](https://img.shields.io/github/package-json/dependency-version/cedrick13bienvenue/summative-final-project/dev/typescript?label=TypeScript&logo=typescript&logoColor=white&color=blue)](https://www.typescriptlang.org)
+[![Express](https://img.shields.io/github/package-json/dependency-version/cedrick13bienvenue/summative-final-project/express?label=Express&logo=express&logoColor=white&color=black)](https://expressjs.com)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue?logo=postgresql&logoColor=white)](https://www.postgresql.org)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](Dockerfile)
+[![License](https://img.shields.io/github/license/cedrick13bienvenue/summative-final-project)](LICENSE)
 
-[![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com/cedrick13bienvenue/summative-final-project)
-[![Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen)](https://github.com/cedrick13bienvenue/summative-final-project)
-[![Node](https://img.shields.io/badge/node-%3E%3D18-blue)](https://nodejs.org)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.2-blue)](https://www.typescriptlang.org)
-[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+# MedConnect Backend
 
 A Digital Prescription & Patient Records System built with **Express.js**, **TypeScript**, and **PostgreSQL**. MedConnect enables doctors to create digital prescriptions with encrypted QR codes, pharmacists to scan and dispense them, and patients to receive everything by email — all through a secure, role-based REST API.
 
