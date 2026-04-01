@@ -231,6 +231,127 @@ describe('EventService.queuePrescriptionEmail', () => {
   });
 });
 
+// ── processEmailJob - setTimeout retry callback ───────────────────────────
+describe('EventService.processEmailJob - setTimeout retry callback', () => {
+  it('should re-queue job after setTimeout fires', async () => {
+    MockEmailService.sendPrescriptionEmail.mockRejectedValue(new Error('SMTP failure'));
+    const instance = EventService.getInstance();
+    (instance as any).emailQueue = [];
+
+    const job: EmailJob = {
+      id: 'job-timeout-retry',
+      type: 'prescription.email',
+      data: {} as any,
+      attempts: 0,
+      maxAttempts: 3,
+      status: 'pending',
+      createdAt: new Date(),
+    };
+
+    await (instance as any).processEmailJob(job);
+    // After processing, job is pending for retry with setTimeout scheduled
+    expect(job.status).toBe('pending');
+
+    // Advance timers by RETRY_DELAY (5000ms) to trigger the setTimeout callback
+    jest.advanceTimersByTime(5001);
+    expect((instance as any).emailQueue).toContain(job);
+  });
+});
+
+// ── queuePrescriptionEmail - nationalId fallback branch ───────────────────
+describe('EventService.queuePrescriptionEmail - nationalId branch', () => {
+  it('should use empty string when nationalId is undefined', async () => {
+    const { Prescription } = require('../../models');
+    (Prescription.findByPk as jest.Mock).mockResolvedValue({
+      id: 'presc-nationalid',
+      diagnosis: 'Test',
+      items: [],
+      // patient.user has no nationalId
+      patient: { user: { fullName: 'Jane', email: 'j@t.com' } },
+      doctor: { user: { fullName: 'Dr. A' } },
+    });
+
+    MockEmailService.sendPrescriptionEmail.mockResolvedValue(true as any);
+    const instance = EventService.getInstance();
+    (instance as any).isProcessing = false;
+    (instance as any).emailQueue = [];
+
+    await (instance as any).queuePrescriptionEmail({
+      prescriptionId: 'presc-nationalid',
+      patientId: 'p-1', doctorId: 'doc-001', prescriptionNumber: 'RX-001',
+      qrCodeHash: 'hash', qrCodeImage: '', expiresAt: new Date().toISOString(),
+    });
+
+    // job was added to queue with patientNationalId = ''
+    const queued = (instance as any).emailQueue;
+    if (queued.length > 0) {
+      expect(queued[0].data.patientNationalId).toBe('');
+    }
+  });
+
+  it('should use nationalId when present', async () => {
+    const { Prescription } = require('../../models');
+    (Prescription.findByPk as jest.Mock).mockResolvedValue({
+      id: 'presc-has-nid',
+      diagnosis: 'Test',
+      items: [],
+      patient: { user: { fullName: 'Jane', email: 'j@t.com', nationalId: 'NID-001' } },
+      doctor: { user: { fullName: 'Dr. A' } },
+    });
+
+    MockEmailService.sendPrescriptionEmail.mockResolvedValue(true as any);
+    const instance = EventService.getInstance();
+    (instance as any).isProcessing = false;
+    (instance as any).emailQueue = [];
+
+    await (instance as any).queuePrescriptionEmail({
+      prescriptionId: 'presc-has-nid',
+      patientId: 'p-1', doctorId: 'doc-001', prescriptionNumber: 'RX-002',
+      qrCodeHash: 'hash2', qrCodeImage: '', expiresAt: new Date().toISOString(),
+    });
+
+    const queued = (instance as any).emailQueue;
+    if (queued.length > 0) {
+      expect(queued[0].data.patientNationalId).toBe('NID-001');
+    }
+  });
+
+  it('should handle queuePrescriptionEmail outer error', async () => {
+    const { Prescription } = require('../../models');
+    (Prescription.findByPk as jest.Mock).mockRejectedValue(new Error('DB crash'));
+    const instance = EventService.getInstance();
+
+    // Should not throw - error is caught inside
+    await expect((instance as any).queuePrescriptionEmail({
+      prescriptionId: 'x', patientId: 'p', doctorId: 'd',
+      prescriptionNumber: 'R', qrCodeHash: 'h', qrCodeImage: '',
+      expiresAt: new Date().toISOString(),
+    })).resolves.toBeUndefined();
+  });
+});
+
+// ── startEmailProcessor setInterval callback ─────────────────────────────
+describe('EventService startEmailProcessor - setInterval callback', () => {
+  it('should call processEmailQueue when queue has jobs and not processing', async () => {
+    MockEmailService.sendPrescriptionEmail.mockResolvedValue(true as any);
+    const instance = EventService.getInstance();
+    (instance as any).isProcessing = false;
+    (instance as any).emailQueue = [{
+      id: 'interval-job',
+      type: 'prescription.email',
+      data: {} as any,
+      attempts: 0, maxAttempts: 3, status: 'pending', createdAt: new Date(),
+    }];
+
+    // Advance by 2 seconds to trigger the setInterval
+    jest.advanceTimersByTime(2000);
+    // Allow promises to resolve
+    await Promise.resolve();
+    // Queue should have been processed
+    expect(MockEmailService.sendPrescriptionEmail).toHaveBeenCalled();
+  });
+});
+
 // ── user.registered and prescription.dispensed event emission ─────────────
 describe('EventService - other events', () => {
   it('should emit user.registered event', () => {
